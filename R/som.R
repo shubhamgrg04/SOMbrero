@@ -163,7 +163,10 @@ initProto <- function(parameters, norm.x.data, x.data) {
                                         center=apply(x.data,2,mean),
                                         scale=FALSE),
                          "none"=as.matrix(parameters$proto0),
-                         "chi2"=as.matrix(parameters$proto0))
+                         "chi2"=as.matrix(parameters$proto0),
+                         "frobenius"=as.matrix(parameters$proto0),
+                         "unitmax"=as.matrix(parameters$proto0), 
+                         "distunitvar"=as.matrix(parameters$proto0))
   }
   return(prototypes)
 }
@@ -312,7 +315,11 @@ trainSOM <- function (x.data, ...) {
                         "unitvar"=scale(x.data, center=TRUE, scale=TRUE),
                         "center"=scale(x.data, center=TRUE, scale=FALSE),
                         "none"=as.matrix(x.data),
-                        "chi2"=korrespPreprocess(x.data))
+                        "chi2"=korrespPreprocess(x.data),
+                        "frobenius"= x.data / sqrt(sum(x.data^2)),
+                        "unitmax"= x.data / max(abs(x.data)), 
+                        "distunitvar"= x.data / sd(x.data[upper.tri(x.data,
+                                                                    diag= F)]))
   
   ## Step 3: Initialize prototypes
   prototypes <- initProto(parameters, norm.x.data, x.data)
@@ -357,6 +364,58 @@ trainSOM <- function (x.data, ...) {
     # Assign
     winner <- oneObsAffectation(cur.obs, cur.prototypes, parameters$type,
                                 norm.x.data)
+# 
+#     print(paste("iter", ind.t, ":", paste(
+#       sapply(1:nrow(x.data), function(x) oneObsAffectation(norm.x.data[x,], cur.prototypes, parameters$type,
+#                                                            norm.x.data)),collapse=" ")))
+#     print(paste("iter", ind.t, ":", paste(
+#       sapply(1:nrow(x.data), function(x) oneObsAffectation(x.data[x,], cur.prototypes, parameters$type,
+#                                                            x.data)),collapse=" ")))
+#     
+#     res <- list("parameters"=parameters, "prototypes"=prototypes, "data"=x.data)
+#     class(res) <- "somRes"
+#     clustering <- predict.somRes(res, x.data)
+#     print(paste("iter", ind.t, ":", paste(clustering, collapse= " "))) # problème!
+#     
+#     print(paste("iter", ind.t, ":", paste(
+#       apply(x.data, 1, oneObsAffectation, prototypes=prototypes, type=parameters$type,
+#             x.data=x.data), collapse= " ")))
+#     
+#     print(paste("iter", ind.t, ":", paste(
+#       apply(norm.x.data, 1, oneObsAffectation, prototypes=prototypes, type=parameters$type,
+#             x.data=norm.x.data), collapse= " ")))
+#     
+#     x.new <- x.data # problème
+#     object <- list("parameters"=parameters, "prototypes"=prototypes, "data"=x.data)
+#     norm.x.new <- switch(object$parameters$scaling,
+#                          "unitvar"=scale(x.new,
+#                                          center=apply(object$data,2,mean),
+#                                          scale=apply(object$data,2,sd)),
+#                          "center"=scale(x.new,
+#                                         center=apply(object$data,2,mean),
+#                                         scale=FALSE),
+#                          "none"=as.matrix(x.new),
+#                          "frobenius"= as.matrix(x.new)/sqrt(sum(object$data^2)),
+#                          "unitmax"= as.matrix(x.new) / max(abs(object$data)), 
+#                          "distunitvar"= as.matrix(x.new) / 
+#                            sd(object$data[upper.tri(object$data, diag= F)]))
+#     norm.proto <- switch(object$parameters$scaling,
+#                          "unitvar"=scale(object$prototypes, 
+#                                          center=apply(object$data,2,mean),
+#                                          scale=apply(object$data,2,sd)),
+#                          "center"=scale(object$prototypes, 
+#                                         center=apply(object$data,2,mean),
+#                                         scale=FALSE),
+#                          "none"=object$prototypes,
+#                          "frobenius"=object$prototypes,
+#                          "unitmax"=object$prototypes,
+#                          "distunitvar"=object$prototypes)
+#     winners <- apply(norm.x.new, 1, oneObsAffectation,
+#                      prototypes=norm.proto, type=object$parameters$type,
+#                      x.data=object$data)
+#     print(paste("iter", ind.t, ":", paste(winners, collapse= " ")))
+#     
+#     print("")
     
     ## Step 7: Representation step
     # Radius value
@@ -384,7 +443,10 @@ trainSOM <- function (x.data, ...) {
                                            center=-apply(x.data,2,mean),
                                            scale=FALSE),
                             "none"=prototypes,
-                            "chi2"=prototypes)
+                            "chi2"=prototypes,
+                            "frobenius"=prototypes,
+                            "unitmax"=prototypes, 
+                            "distunitvar"=prototypes)
         colnames(out.proto) <- colnames(norm.x.data)
         rownames(out.proto) <- 1:prod(parameters$the.grid$dim)
         res <- list("parameters"=parameters, "prototypes"=out.proto, 
@@ -415,7 +477,10 @@ trainSOM <- function (x.data, ...) {
                                          center=-apply(x.data,2,mean),
                                          scale=FALSE),
                           "none"=prototypes,
-                          "chi2"=prototypes)
+                          "chi2"=prototypes,
+                          "frobenius"=prototypes,
+                          "unitmax"= prototypes, 
+                          "distunitvar"=prototypes)
       
       res <- list("parameters"=parameters, "prototypes"=out.proto,
                   "data"=x.data)
@@ -509,7 +574,21 @@ predict.somRes <- function(object, x.new, ...) {
                          "center"=scale(x.new,
                                         center=apply(object$data,2,mean),
                                         scale=FALSE),
-                         "none"=as.matrix(x.new))
+                         "none"=as.matrix(x.new),
+                         "frobenius"=as.matrix(x.new)/sqrt(sum(object$data^2)),
+                         "unitmax"=as.matrix(x.new)/max(abs(object$data)), 
+                         "distunitvar"=as.matrix(x.new)/ 
+                           sd(object$data[upper.tri(object$data, diag= F)]))
+    if (object$parameters$type=="relational") {
+      norm.x.data <- switch(object$parameters$scaling,
+                           "none"=as.matrix(object$data),
+                           "frobenius"=as.matrix(object$data)/
+                             sqrt(sum(object$data^2)),
+                           "unitmax"=as.matrix(object$data)/
+                             max(abs(object$data)), 
+                           "distunitvar"=as.matrix(object$data)/ 
+                             sd(object$data[upper.tri(object$data, diag= F)]))
+    } else norm.x.data <- NULL
     norm.proto <- switch(object$parameters$scaling,
                          "unitvar"=scale(object$prototypes, 
                                          center=apply(object$data,2,mean),
@@ -517,10 +596,13 @@ predict.somRes <- function(object, x.new, ...) {
                          "center"=scale(object$prototypes, 
                                         center=apply(object$data,2,mean),
                                         scale=FALSE),
-                         "none"=object$prototypes)
+                         "none"=object$prototypes,
+                         "frobenius"=object$prototypes,
+                         "unitmax"=object$prototypes,
+                         "distunitvar"=object$prototypes)
     winners <- apply(norm.x.new, 1, oneObsAffectation,
                      prototypes=norm.proto, type=object$parameters$type,
-                     x.data=object$data)
+                     x.data=norm.x.data)
   } else {
     if (!identical(as.matrix(x.new), object$data))
       warning("For 'korresp' SOM, predict.somRes function can only be called on

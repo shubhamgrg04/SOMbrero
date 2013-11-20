@@ -15,19 +15,26 @@ initSOM <- function(dimension=c(5,5), topo=c("square"),
                                    "korresp"="chi2"), 
                     radius.type=c("letremy"), eps0=1) {
   type <- match.arg(type)
+  scaling <- match.arg(scaling, c("unitvar", "none", "center", "chi2", 
+                                  "frobenius", "unitmax", "distunitvar"))
   # check scaling compatibility
   if (type=="korresp" && scaling!="chi2") {
     scaling <- "chi2"
     warning("scaling value replaced: must be 'chi2' for 'korresp' type\n", 
             call.=TRUE, immediate.=TRUE)
   }
-  if (type=="relational" && scaling!="none") {
+  if (type=="relational" && ! scaling %in% c("none", "frobenius",
+                                             "unitmax", "distunitvar")) {
     scaling <- "none"
-    warning("No scaling for 'relational' SOM ; value ignored\n", call.=TRUE, 
+    warning("Wrong scaling for 'relational' SOM ; set to 'none'\n", call.=TRUE, 
             immediate.=TRUE)
   }
   if (type=="numeric" && scaling=="chi2")
     stop("scaling='chi2' is only implemented for 'korresp' type\n", 
+         call.=TRUE)
+  if (type=="numeric" && scaling %in% c("frobenius", "unitmax", "distunitvar"))
+    stop(paste(sep= "", "scaling='", scaling, 
+               "' is only implemented for 'relational' type\n"),
          call.=TRUE)
   
   # check proto0
@@ -54,8 +61,7 @@ initSOM <- function(dimension=c(5,5), topo=c("square"),
                  type=type, mode=match.arg(mode), maxit=maxit,
                  nb.save=nb.save, proto0=proto0,
                  init.proto=match.arg(init.proto, c("random","obs")), 
-                 scaling=match.arg(scaling, c("unitvar", "none", "center", 
-                                              "chi2")),
+                 scaling=scaling,
                  radius.type=match.arg(radius.type),
                  verbose=verbose, eps0=eps0)
   
