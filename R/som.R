@@ -525,6 +525,27 @@ summary.somRes <- function(object, ...) {
     cat("         Degrees of freedom      : ", chisq.res$parameter, "\n")
     cat("         p-value                 : ", chisq.res$p.value, "\n")
     cat("                 significativity : ", sig, "\n")
+  } else if (object$parameters$type=="relational") {
+    sse.total <- sum(object$data)/(2*nrow(object$data))
+    sse.within <- 0
+    for (i.clus in names(table(object$clustering)))
+      sse.within <- {
+        sse.within + sum(object$data[as.character(object$clustering)==i.clus,
+                                     as.character(object$clustering)==i.clus])/
+          (2*table(object$clustering)[i.clus])      
+      }
+    n.clusters <- length(table(object$clustering))
+    F.stat <- ((sse.total-sse.within)/sse.within) * 
+      ((nrow(object$data)-n.clusters)/(n.clusters-1))
+    p.value <- 1-pf(F.stat, n.clusters-1, nrow(object$data)-n.clusters)
+    if (p.value<0.05) sig <- "*"
+    if (p.value<0.01) sig <- "**"
+    if (p.value<0.001) sig <- "***"
+    cat("\n      ANOVA            : \n")
+    cat("         F                       : ", F.stat, "\n")
+    cat("         Degrees of freedom      : ", n.clusters-1, "\n")
+    cat("         p-value                 : ", p.value, "\n")
+    cat("                 significativity : ", sig, "\n")
   }
 }
 

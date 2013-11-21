@@ -1,6 +1,5 @@
 
 * other features (easy)
-** add ANOVA for dissimilarity in summary
 ** add ANOVA for superclasses
 ** init=pca
 ** add a function graph2SOM that projects a graph on the grid

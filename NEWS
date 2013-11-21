@@ -7,6 +7,7 @@ New features:
   Added preprocessing for dissimilarity : division by the norm (Frobenius), 
 cosine scaling, division by standard deviation of the distances, 
 division by max distance
+  Added ANOVA to summary for relational SOM
 
 Code improvements:
   Changed default value of init.proto to "obs" for "relational" algorithm
