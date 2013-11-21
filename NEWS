@@ -4,6 +4,9 @@ New features:
   Added a web user interface, implemented with shiny
   Added the topographic error to somRes.summary
   Improved the summary of somSC (table of neuron numbers and superclass numbers)
+  Added preprocessing for dissimilarity : division by the norm (Frobenius), 
+cosine scaling, division by standard deviation of the distances, 
+division by max distance
 
 Code improvements:
   Changed default value of init.proto to "obs" for "relational" algorithm
