@@ -180,7 +180,8 @@ initProto <- function(parameters, norm.x.data, x.data) {
                          "chi2"=as.matrix(parameters$proto0),
                          "frobenius"=as.matrix(parameters$proto0),
                          "unitmax"=as.matrix(parameters$proto0), 
-                         "distunitvar"=as.matrix(parameters$proto0))
+                         "distunitvar"=as.matrix(parameters$proto0),
+                         "cosine"=as.matrix(parameters$proto0))
   }
   return(prototypes)
 }
@@ -330,10 +331,11 @@ trainSOM <- function (x.data, ...) {
                         "center"=scale(x.data, center=TRUE, scale=FALSE),
                         "none"=as.matrix(x.data),
                         "chi2"=korrespPreprocess(x.data),
-                        "frobenius"= x.data / sqrt(sum(x.data^2)),
-                        "unitmax"= x.data / max(abs(x.data)), 
-                        "distunitvar"= x.data / sd(x.data[upper.tri(x.data,
-                                                                    diag= F)]))
+                        "frobenius"=x.data/sqrt(sum(x.data^2)),
+                        "unitmax"=x.data/max(abs(x.data)), 
+                        "distunitvar"=x.data/sd(x.data[upper.tri(x.data,
+                                                                 diag= F)]),
+                        "cosine"=cosinePreprocess(x.data))
   
   ## Step 3: Initialize prototypes
   prototypes <- initProto(parameters, norm.x.data, x.data)
@@ -408,7 +410,8 @@ trainSOM <- function (x.data, ...) {
                             "chi2"=prototypes,
                             "frobenius"=prototypes,
                             "unitmax"=prototypes, 
-                            "distunitvar"=prototypes)
+                            "distunitvar"=prototypes,
+                            "cosine"=prototypes)
         colnames(out.proto) <- colnames(norm.x.data)
         rownames(out.proto) <- 1:prod(parameters$the.grid$dim)
         res <- list("parameters"=parameters, "prototypes"=out.proto, 
@@ -442,7 +445,8 @@ trainSOM <- function (x.data, ...) {
                           "chi2"=prototypes,
                           "frobenius"=prototypes,
                           "unitmax"= prototypes, 
-                          "distunitvar"=prototypes)
+                          "distunitvar"=prototypes,
+                          "cosine"=prototypes)
       
       res <- list("parameters"=parameters, "prototypes"=out.proto,
                   "data"=x.data)
@@ -540,7 +544,8 @@ predict.somRes <- function(object, x.new, ...) {
                          "frobenius"=as.matrix(x.new)/sqrt(sum(object$data^2)),
                          "unitmax"=as.matrix(x.new)/max(abs(object$data)), 
                          "distunitvar"=as.matrix(x.new)/ 
-                           sd(object$data[upper.tri(object$data, diag= F)]))
+                           sd(object$data[upper.tri(object$data, diag= F)]),
+                         "cosine"=cosinePreprocess(x.new))
     if (object$parameters$type=="relational") {
       norm.x.data <- switch(object$parameters$scaling,
                            "none"=as.matrix(object$data),
@@ -549,7 +554,8 @@ predict.somRes <- function(object, x.new, ...) {
                            "unitmax"=as.matrix(object$data)/
                              max(abs(object$data)), 
                            "distunitvar"=as.matrix(object$data)/ 
-                             sd(object$data[upper.tri(object$data, diag= F)]))
+                             sd(object$data[upper.tri(object$data, diag= F)]),
+                            "cosine"= cosinePreprocess(object$data))
     } else norm.x.data <- NULL
     norm.proto <- switch(object$parameters$scaling,
                          "unitvar"=scale(object$prototypes, 
@@ -561,7 +567,8 @@ predict.somRes <- function(object, x.new, ...) {
                          "none"=object$prototypes,
                          "frobenius"=object$prototypes,
                          "unitmax"=object$prototypes,
-                         "distunitvar"=object$prototypes)
+                         "distunitvar"=object$prototypes,
+                         "cosine"=object$prototypes)
     winners <- apply(norm.x.new, 1, oneObsAffectation,
                      prototypes=norm.proto, type=object$parameters$type,
                      x.data=norm.x.data)

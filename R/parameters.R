@@ -16,7 +16,8 @@ initSOM <- function(dimension=c(5,5), topo=c("square"),
                     radius.type=c("letremy"), eps0=1) {
   type <- match.arg(type)
   scaling <- match.arg(scaling, c("unitvar", "none", "center", "chi2", 
-                                  "frobenius", "unitmax", "distunitvar"))
+                                  "frobenius", "unitmax", "distunitvar",
+                                  "cosine"))
   # check scaling compatibility
   if (type=="korresp" && scaling!="chi2") {
     scaling <- "chi2"
@@ -24,7 +25,8 @@ initSOM <- function(dimension=c(5,5), topo=c("square"),
             call.=TRUE, immediate.=TRUE)
   }
   if (type=="relational" && ! scaling %in% c("none", "frobenius",
-                                             "unitmax", "distunitvar")) {
+                                             "unitmax", "distunitvar",
+                                             "cosine")) {
     scaling <- "none"
     warning("Wrong scaling for 'relational' SOM ; set to 'none'\n", call.=TRUE, 
             immediate.=TRUE)
@@ -32,7 +34,8 @@ initSOM <- function(dimension=c(5,5), topo=c("square"),
   if (type=="numeric" && scaling=="chi2")
     stop("scaling='chi2' is only implemented for 'korresp' type\n", 
          call.=TRUE)
-  if (type=="numeric" && scaling %in% c("frobenius", "unitmax", "distunitvar"))
+  if (type=="numeric" && scaling %in% c("frobenius", "unitmax", "distunitvar",
+                                        "cosine"))
     stop(paste(sep= "", "scaling='", scaling, 
                "' is only implemented for 'relational' type\n"),
          call.=TRUE)
