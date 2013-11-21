@@ -123,6 +123,20 @@ korrespPreprocess <- function(cont.table) {
   colnames(both.profiles) <- c(colnames(cont.table),rownames(cont.table))
   return(both.profiles)
 }
+# Cosine preprocessing (for "relational" case)
+cosinePreprocess <- function(diss.matrix) {
+  # similarity matrix by double centering
+  sim.matrix <- -.5* (diag(1, nrow(diss.matrix))- 1/nrow(diss.matrix)) %*%
+    diss.matrix %*% (diag(1, nrow(diss.matrix))-1/nrow(diss.matrix))
+  # cosine scaling
+  scaled.ker <- sim.matrix/sqrt(diag(sim.matrix)%o%rep(1,nrow(sim.matrix))*
+                                  rep(1,nrow(sim.matrix))%o%diag(sim.matrix))
+  # normalized dissimilarity
+  scaled.diss <- sqrt(diag(scaled.ker)%o%rep(1,nrow(scaled.ker)) +
+                        rep(1,nrow(scaled.ker))%o%diag(scaled.ker) -
+                        2 * scaled.ker)
+  scaled.diss
+}
 
 # Step 3: Initialize prototypes
 initProto <- function(parameters, norm.x.data, x.data) {
@@ -324,7 +338,7 @@ trainSOM <- function (x.data, ...) {
   ## Step 3: Initialize prototypes
   prototypes <- initProto(parameters, norm.x.data, x.data)
   
-  # Step 4: Iitialize backup if needed
+  ## Step 4: Initialize backup if needed
   if(parameters$nb.save>1) {
     backup <- list()
     backup$prototypes <- list()
@@ -364,58 +378,6 @@ trainSOM <- function (x.data, ...) {
     # Assign
     winner <- oneObsAffectation(cur.obs, cur.prototypes, parameters$type,
                                 norm.x.data)
-# 
-#     print(paste("iter", ind.t, ":", paste(
-#       sapply(1:nrow(x.data), function(x) oneObsAffectation(norm.x.data[x,], cur.prototypes, parameters$type,
-#                                                            norm.x.data)),collapse=" ")))
-#     print(paste("iter", ind.t, ":", paste(
-#       sapply(1:nrow(x.data), function(x) oneObsAffectation(x.data[x,], cur.prototypes, parameters$type,
-#                                                            x.data)),collapse=" ")))
-#     
-#     res <- list("parameters"=parameters, "prototypes"=prototypes, "data"=x.data)
-#     class(res) <- "somRes"
-#     clustering <- predict.somRes(res, x.data)
-#     print(paste("iter", ind.t, ":", paste(clustering, collapse= " "))) # problème!
-#     
-#     print(paste("iter", ind.t, ":", paste(
-#       apply(x.data, 1, oneObsAffectation, prototypes=prototypes, type=parameters$type,
-#             x.data=x.data), collapse= " ")))
-#     
-#     print(paste("iter", ind.t, ":", paste(
-#       apply(norm.x.data, 1, oneObsAffectation, prototypes=prototypes, type=parameters$type,
-#             x.data=norm.x.data), collapse= " ")))
-#     
-#     x.new <- x.data # problème
-#     object <- list("parameters"=parameters, "prototypes"=prototypes, "data"=x.data)
-#     norm.x.new <- switch(object$parameters$scaling,
-#                          "unitvar"=scale(x.new,
-#                                          center=apply(object$data,2,mean),
-#                                          scale=apply(object$data,2,sd)),
-#                          "center"=scale(x.new,
-#                                         center=apply(object$data,2,mean),
-#                                         scale=FALSE),
-#                          "none"=as.matrix(x.new),
-#                          "frobenius"= as.matrix(x.new)/sqrt(sum(object$data^2)),
-#                          "unitmax"= as.matrix(x.new) / max(abs(object$data)), 
-#                          "distunitvar"= as.matrix(x.new) / 
-#                            sd(object$data[upper.tri(object$data, diag= F)]))
-#     norm.proto <- switch(object$parameters$scaling,
-#                          "unitvar"=scale(object$prototypes, 
-#                                          center=apply(object$data,2,mean),
-#                                          scale=apply(object$data,2,sd)),
-#                          "center"=scale(object$prototypes, 
-#                                         center=apply(object$data,2,mean),
-#                                         scale=FALSE),
-#                          "none"=object$prototypes,
-#                          "frobenius"=object$prototypes,
-#                          "unitmax"=object$prototypes,
-#                          "distunitvar"=object$prototypes)
-#     winners <- apply(norm.x.new, 1, oneObsAffectation,
-#                      prototypes=norm.proto, type=object$parameters$type,
-#                      x.data=object$data)
-#     print(paste("iter", ind.t, ":", paste(winners, collapse= " ")))
-#     
-#     print("")
     
     ## Step 7: Representation step
     # Radius value
