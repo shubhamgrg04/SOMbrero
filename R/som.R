@@ -4,6 +4,22 @@
 ##### Auxiliary functions
 ################################################################################
 
+# Cosine preprocessing (for "relational" case)
+cosinePreprocess <- function(diss.matrix) {
+  # similarity matrix by double centering
+  sim.matrix <- -.5* (diag(1, nrow(diss.matrix))- 1/nrow(diss.matrix)) %*%
+    diss.matrix %*% (diag(1, nrow(diss.matrix))-1/nrow(diss.matrix))
+  # cosine scaling
+  scaled.ker <- sweep(sweep(sim.matrix,1,diag(sim.matrix),"/"),
+                      2,diag(sim.matrix),"/")
+
+  # normalized dissimilarity
+  scaled.diss <- sweep(sweep(-2*scaled.ker,1,diag(scaled.ker),"+"),
+                       2,diag(scaled.ker),"-")
+    
+  scaled.diss
+}
+
 calculateRadius <- function(the.grid, radius.type, ind.t, maxit) {
   ## TODO: implement other radius types
   # ind.t: iteration index
@@ -122,20 +138,6 @@ korrespPreprocess <- function(cont.table) {
   rownames(both.profiles) <- c(rownames(cont.table),colnames(cont.table))
   colnames(both.profiles) <- c(colnames(cont.table),rownames(cont.table))
   return(both.profiles)
-}
-# Cosine preprocessing (for "relational" case)
-cosinePreprocess <- function(diss.matrix) {
-  # similarity matrix by double centering
-  sim.matrix <- -.5* (diag(1, nrow(diss.matrix))- 1/nrow(diss.matrix)) %*%
-    diss.matrix %*% (diag(1, nrow(diss.matrix))-1/nrow(diss.matrix))
-  # cosine scaling
-  scaled.ker <- sim.matrix/sqrt(diag(sim.matrix)%o%rep(1,nrow(sim.matrix))*
-                                  rep(1,nrow(sim.matrix))%o%diag(sim.matrix))
-  # normalized dissimilarity
-  scaled.diss <- sqrt(diag(scaled.ker)%o%rep(1,nrow(scaled.ker)) +
-                        rep(1,nrow(scaled.ker))%o%diag(scaled.ker) -
-                        2 * scaled.ker)
-  scaled.diss
 }
 
 # Step 3: Initialize prototypes
@@ -333,8 +335,7 @@ trainSOM <- function (x.data, ...) {
                         "chi2"=korrespPreprocess(x.data),
                         "frobenius"=x.data/sqrt(sum(x.data^2)),
                         "unitmax"=x.data/max(abs(x.data)), 
-                        "distunitvar"=x.data/sd(x.data[upper.tri(x.data,
-                                                                 diag= F)]),
+                        "distunitvar"=x.data/sd(max(abs(x.data))),
                         "cosine"=cosinePreprocess(x.data))
   
   ## Step 3: Initialize prototypes
@@ -527,20 +528,22 @@ summary.somRes <- function(object, ...) {
     cat("                 significativity : ", sig, "\n")
   } else if (object$parameters$type=="relational") {
     sse.total <- sum(object$data)/(2*nrow(object$data))
-    sse.within <- 0
-    for (i.clus in names(table(object$clustering)))
-      sse.within <- {
-        sse.within + sum(object$data[as.character(object$clustering)==i.clus,
-                                     as.character(object$clustering)==i.clus])/
-          (2*table(object$clustering)[i.clus])      
-      }
-    n.clusters <- length(table(object$clustering))
+    
+    size.clust <- table(object$clustering)
+    sse.within <- sum(as.vector(by(object$data,object$clustering,sum))/
+                        (2*size.clust[size.clust!=0]))
+
+    n.clusters <- length(unique(object$clustering))
     F.stat <- ((sse.total-sse.within)/sse.within) * 
       ((nrow(object$data)-n.clusters)/(n.clusters-1))
+    
     p.value <- 1-pf(F.stat, n.clusters-1, nrow(object$data)-n.clusters)
-    if (p.value<0.05) sig <- "*"
-    if (p.value<0.01) sig <- "**"
-    if (p.value<0.001) sig <- "***"
+    if (p.value<0.001) {
+      sig <- "***"
+    } else if (p.value<0.1) {
+      sig <- "**"
+    } else if (p.value<0.05) sig <- "*"
+
     cat("\n      ANOVA            : \n")
     cat("         F                       : ", F.stat, "\n")
     cat("         Degrees of freedom      : ", n.clusters-1, "\n")
@@ -553,6 +556,11 @@ predict.somRes <- function(object, x.new, ...) {
   if (is.null(dim(x.new))) x.new <- matrix(x.new,nrow=1,
                                            dimnames=list(1,
                                                          colnames(object$data)))
+  if ((object$parameters$type=="relational")&&
+        (ncol(object$data)!=ncol(x.new)))
+    stop("Wrong dimensions for 'x.new': columns must correspond to the training
+         dataset", call.=TRUE)
+  
   if(object$parameters$type!="korresp") {
     norm.x.new <- switch(object$parameters$scaling,
                          "unitvar"=scale(x.new,
