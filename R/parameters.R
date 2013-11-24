@@ -16,7 +16,7 @@ initSOM <- function(dimension=c(5,5), topo=c("square"),
                     radius.type=c("letremy"), eps0=1) {
   type <- match.arg(type)
   scaling <- match.arg(scaling, c("unitvar", "none", "center", "chi2", 
-                                  "frobenius", "max", "maxsq", "cosine"))
+                                  "frobenius", "max", "sd", "cosine"))
   # check scaling compatibility
   if (type=="korresp" && scaling!="chi2") {
     scaling <- "chi2"

@@ -335,7 +335,8 @@ trainSOM <- function (x.data, ...) {
                         "chi2"=korrespPreprocess(x.data),
                         "frobenius"=x.data/sqrt(sum(x.data^2)),
                         "unitmax"=x.data/max(abs(x.data)), 
-                        "distunitvar"=x.data/sd(max(abs(x.data))),
+                        "distunitvar"=x.data/
+                          sd(x.data[upper.tri(x.data,diag=FALSE)]),
                         "cosine"=cosinePreprocess(x.data))
   
   ## Step 3: Initialize prototypes
