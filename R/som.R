@@ -531,8 +531,10 @@ summary.somRes <- function(object, ...) {
     sse.total <- sum(object$data)/(2*nrow(object$data))
     
     size.clust <- table(object$clustering)
-    sse.within <- sum(as.vector(by(object$data,object$clustering,sum))/
-                        (2*size.clust[size.clust!=0]))
+    sse.within <- sapply(unique(object$clustering), function(clust)
+      sum(object$data[which(object$clustering==clust),
+                      which(object$clustering==clust)]))/
+      (2*size.clust[size.clust!=0]))
 
     n.clusters <- length(unique(object$clustering))
     F.stat <- ((sse.total-sse.within)/sse.within) * 
