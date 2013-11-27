@@ -3,7 +3,8 @@
 ## default type: numeric
 ## default dimensions will be calculated by the algorithm (see 'help(trainSOM)')
 ## default number of iterations will also be calculated by the algorithm
-## default number of intermediate savings is 0 (computational time increases when some are recorded)
+## default number of intermediate savings is 0 
+## (computational time increases when intermediate maps are saved)
 iris.som <- trainSOM(x.data=iris[,1:4])
 
 # plot the prototype values for the first variable
@@ -24,15 +25,19 @@ plot(iris.som, what="obs", type="hitmap")
 ## or with a table
 table(iris.som$clustering)
 ## or more precisely by printing the names of the rows in their assigned neuron
-### WARNING: this graphic may produce some warnings when all row names can not fit on the plot
-### they can be solved by using the 'scale' argument (see 'help(wordcloud)')
+### WARNING: this graphic may produce some warnings when all row names can not 
+### fit on the plot. This can be solved by using the 'scale' argument 
+### (see 'help(wordcloud)')
 plot(iris.som, what="obs", type="names")
 
 # observation values for each neuron can be plotted with a radar plot
-## the argument 'key.loc' is used to add a legend and specify its location (see 'help(stars)')
-plot(iris.som, what="prototypes", type="radar", key.loc=c(-1,2), mar=c(0,10,2,0))
+## the argument 'key.loc' is used to add a legend and specify its location 
+## (see 'help(stars)')
+plot(iris.som, what="prototypes", type="radar", 
+     key.loc=c(-1,2), mar=c(0,10,2,0))
 
-# the flower species distribution can be plotted by passing the 'Species' variable as an additional variable
+# the flower species distribution can be plotted by passing the 'Species' 
+# variable as an additional variable
 plot(iris.som, what="add", type="pie", variable=iris$Species)
 
 # perform a hierarchical clustering

@@ -574,7 +574,7 @@ predict.somRes <- function(object, x.new, ...) {
                          "frobenius"=as.matrix(x.new)/sqrt(sum(object$data^2)),
                          "max"=as.matrix(x.new)/max(abs(object$data)), 
                          "sd"=as.matrix(x.new)/ 
-                           sd(object$data[upper.tri(object$data, diag= FALSE)]),
+                           sd(object$data[upper.tri(object$data, diag=FALSE)]),
                          "cosine"=cosinePreprocess(x.new))
     if (object$parameters$type=="relational") {
       norm.x.data <- switch(object$parameters$scaling,
@@ -585,7 +585,7 @@ predict.somRes <- function(object, x.new, ...) {
                               max(abs(object$data)), 
                             "sd"=as.matrix(object$data)/ 
                               sd(object$data[upper.tri(object$data,
-                                                       diag= FALSE)]),
+                                                       diag=FALSE)]),
                             "cosine"= cosinePreprocess(object$data))
     } else norm.x.data <- NULL
     norm.proto <- switch(object$parameters$scaling,

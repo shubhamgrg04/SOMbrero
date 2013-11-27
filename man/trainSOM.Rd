@@ -29,8 +29,8 @@ trainSOM(x.data, \ldots)
     SOM types
     \item \code{dimension}: for a \code{korresp} SOM, is equal to maximum 
     between 5 and the minimum of 10 and the ceiling value of the square root 
-    of (number of rows+number of columns)/10 ; in all other SOM types, the square 
-    root only considers the number of rows (divided by 10).
+    of (number of rows+number of columns)/10 ; in all other SOM types, the  
+    square root only considers the number of rows (divided by 10).
   }}
   \item{x, object}{an object of class \code{somRes}}
 }
