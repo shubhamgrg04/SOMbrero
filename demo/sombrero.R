@@ -13,7 +13,8 @@ z[is.na(z)] <- 1
 x <- matrix(x,nr=n,nc=n)
 y <- matrix(y,nr=n,nc=n,byrow=T)
 sombrero <- data.frame(x=as.vector(x),y=as.vector(y),z=as.vector(z))
-scatterplot3d(sombrero,color=brewer.pal(7,"Set2")[cut(1:nrow(sombrero),7,label=FALSE)],,pch=".")
+scatterplot3d(sombrero,color=brewer.pal(7,"Set2")[cut(1:nrow(sombrero),
+                                                      7,label=FALSE)],,pch=".")
 
 ## numeric SOM example with demo(numeric)
 ## korresp SOM example (for contingency tables) with demo(korresp)

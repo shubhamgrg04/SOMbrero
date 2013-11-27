@@ -1,9 +1,11 @@
 data(presidentielles2002)
 
 # train the korresp algorithm
-## details on the presidentielles2002 data set are provided with 'help(presidentielles2002)'
+## details on the presidentielles2002 data set are provided with 
+## 'help(presidentielles2002)'
 ## default dimensions will be calculated by the algorithm (see 'help(trainSOM)')
-presi.som <- trainSOM(x.data=presidentielles2002, type="korresp", scaling="chi2", dimension=c(8,8))
+presi.som <- trainSOM(x.data=presidentielles2002, type="korresp", 
+                      scaling="chi2", dimension=c(8,8))
 
 # prototypes overview can either be plotted for row variables
 plot(presi.som, what="prototypes", type="lines", view="r")
@@ -23,8 +25,9 @@ plot(presi.som, what="obs", type="hitmap")
 table(presi.som$clustering)
 ## or more precisely by printing the variables names on the map
 ### NOTE: in the korresp SOM, both row and columns variables are considered
-### WARNING: this graphic may produce some warnings when all row names can not fit on the plot
-### this problem can be solved by enlarging your graphic device or by using the 'scale' argument (see 'help(wordcloud)')
+### WARNING: this graphic may produce some warnings when all row names can not 
+### fit on the plot. This problem can be solved by enlarging your graphic device
+### or by using the 'scale' argument (see 'help(wordcloud)')
 plot(presi.som, what="obs", type="names", scale=c(0.6,0.7))
 
 # hierarchical clustering is also available

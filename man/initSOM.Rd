@@ -62,8 +62,8 @@ initSOM(dimension=c(5,5), topo=c("square"),
   For \code{korresp} SOM, the only available value is \code{chi2}.
   For \code{relational} SOM, possibilities are \code{none} (no pre-processing, 
   default value for \code{relational} SOM), \code{frobenius} (dissimilarity 
-  matrix is divided by its frobenius norm), \code{unitmax} (dissimilarity matrix
-  is divided by its maximum), \code{distunitvar} (dissimilarities are divided 
+  matrix is divided by its frobenius norm), \code{max} (dissimilarity matrix
+  is divided by its maximum), \code{sd} (dissimilarities are divided 
   by their standard deviation), and \code{cosine}.}
   \item{radius.type}{The neighbourhood type. Default value is \code{"letremy"},
   which corresponds to the original implementation by Patrick Letremy.}
