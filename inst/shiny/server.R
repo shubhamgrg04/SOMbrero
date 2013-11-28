@@ -161,7 +161,8 @@ shinyServer(function(input, output, session) {
                 choices= switch(input$somtype,
                                 "numeric"= list("unitvar", "none", "center"),
                                 "korresp"= list("chi2"),
-                                "relational"= list("none")),
+                                "relational"= list("none", "frobenius", "max",
+                                                   "sd")),
                 selected= switch(input$somtype, "numeric"= "unitvar",
                                  "korresp"= "chi2", "relational"= "none"))
   })
