@@ -24,15 +24,15 @@ initSOM <- function(dimension=c(5,5), topo=c("square"),
             call.=TRUE, immediate.=TRUE)
   }
   if (type=="relational" && ! scaling %in% c("none", "frobenius", "max", 
-                                             "maxsq", "cosine")) {
+                                             "sd", "cosine")) {
     scaling <- "none"
     warning("Wrong scaling for 'relational' SOM ; set to 'none'\n", call.=TRUE, 
             immediate.=TRUE)
   }
-  if (type=="numeric" && scaling %in% c("chi2", "frobenius", "max", "maxsq",
+  if (type=="numeric" && scaling %in% c("chi2", "frobenius", "max", "sd",
                                         "cosine"))
     stop(paste(sep= "", "scaling='", scaling, 
-               "' is only implemented for 'relational' type\n"),
+               "' is not implemented for 'numeric' type\n"),
          call.=TRUE)
   
   # check proto0
