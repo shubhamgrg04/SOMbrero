@@ -296,7 +296,7 @@ trainSOM <- function (x.data, ...) {
   }
   # Check inputs
   if (!is.null(param.args$type) && param.args$type=="relational" && 
-        (!(identical(x.data, t(x.data))) || (sum(diag(x.data)!=0)>0)))
+        (!all(x.data==t(x.data)) || (sum(diag(x.data)!=0)>0)))
     stop("data do not match chosen SOM type ('relational')\n", call.=TRUE)
   
   # Initialize parameters and print
