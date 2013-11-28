@@ -10,14 +10,16 @@ cosinePreprocess <- function(diss.matrix) {
   sim.matrix <- -.5* (diag(1, nrow(diss.matrix))- 1/nrow(diss.matrix)) %*%
     diss.matrix %*% (diag(1, nrow(diss.matrix))-1/nrow(diss.matrix))
   # cosine scaling
-  scaled.ker <- sweep(sweep(sim.matrix,1,diag(sim.matrix),"/"),
-                      2,diag(sim.matrix),"/")
-
+  scaled.ker <- sweep(sweep(sim.matrix,1,sqrt(diag(sim.matrix)),"/"),
+                      2,sqrt(diag(sim.matrix)),"/")  
   # normalized dissimilarity
   scaled.diss <- sweep(sweep(-2*scaled.ker,1,diag(scaled.ker),"+"),
-                       2,diag(scaled.ker),"-")
-    
-  scaled.diss
+                       2,diag(scaled.ker),"+")
+  
+  rownames(scaled.diss) <- rownames(diss.matrix)
+  colnames(scaled.diss) <- colnames(diss.matrix)
+  scaled.diss <- .5*(scaled.diss+t(scaled.diss))
+  sqrt(scaled.diss)
 }
 
 calculateRadius <- function(the.grid, radius.type, ind.t, maxit) {
