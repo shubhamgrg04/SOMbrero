@@ -558,10 +558,10 @@ predict.somRes <- function(object, x.new, ...) {
   if (is.null(dim(x.new))) x.new <- matrix(x.new,nrow=1,
                                            dimnames=list(1,
                                                          colnames(object$data)))
-  if ((object$parameters$type=="relational")&&
+  if ((object$parameters$type %in% c("numeric", "relational")) &&
         (ncol(object$data)!=ncol(x.new)))
-    stop("Wrong dimensions for 'x.new': columns must correspond to the training
-         dataset", call.=TRUE)
+    stop("Wrong dimensions for 'x.new': number of columns must correspond ",
+         "to the training dataset", call.=TRUE)
   
   if(object$parameters$type!="korresp") {
     norm.x.new <- switch(object$parameters$scaling,
