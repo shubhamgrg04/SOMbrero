@@ -8,6 +8,7 @@ New features:
 cosine scaling, division by standard deviation of the distances, 
 division by max distance
   Added ANOVA to summary for relational SOM
+  Added ANOVA to summary of somSC for numeric and relational SOM
 
 Code improvements:
   Changed default value of init.proto to "obs" for "relational" algorithm

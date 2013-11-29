@@ -60,6 +60,55 @@ summary.somSC <- function(object, ...) {
     names(output.clustering) <- seq_along(object$cluster)
     print(output.clustering)
     cat("\n")
+    
+    if (object$som$parameters$type=="numeric") {
+      sc.clustering <- object$cluster[object$som$clustering]
+      cat("\n  ANOVA\n")
+      res.anova <- as.data.frame(t(sapply(1:ncol(object$som$data), 
+                                          function(ind) {
+        c(round(summary(aov(object$som$data[,ind]~as.factor(sc.clustering)))
+                [[1]][1,4],digits=3),
+          round(summary(aov(object$som$data[,ind]~as.factor(sc.clustering)))
+                [[1]][1,5],digits=8))
+      })))
+      names(res.anova) <- c("F", "pvalue")
+      res.anova$significativity <- rep("",ncol(object$som$data))
+      res.anova$significativity[res.anova$"pvalue"<0.05] <- "*"
+      res.anova$significativity[res.anova$"pvalue"<0.01] <- "**"
+      res.anova$significativity[res.anova$"pvalue"<0.001] <- "***"
+      rownames(res.anova) <- colnames(object$som$data)
+      
+      cat("\n        Degrees of freedom : ", 
+          summary(aov(object$som$data[,1]~as.factor(sc.clustering)))[[1]][1,1],
+          "\n\n")
+      print(res.anova)  
+      cat("\n")
+    } else if (object$som$parameters$type=="relational") {
+      sse.total <- sum(object$som$data)/(2*nrow(object$som$data))
+      
+      sc.clustering <- object$cluster[object$som$clustering]
+      size.clust <- table(sc.clustering)
+      sse.within <- sum(sapply(unique(sc.clustering), function(clust)
+        sum(object$som$data[sc.clustering==clust,sc.clustering==clust])/
+                                 (2*sum(sc.clustering==clust))))
+      
+      n.clusters <- length(unique(sc.clustering))
+      F.stat <- ((sse.total-sse.within)/sse.within) * 
+        ((nrow(object$som$data)-n.clusters)/(n.clusters-1))
+      
+      p.value <- 1-pf(F.stat, n.clusters-1, nrow(object$som$data)-n.clusters)
+      if (p.value<0.001) {
+        sig <- "***"
+      } else if (p.value<0.1) {
+        sig <- "**"
+      } else if (p.value<0.05) sig <- "*"
+      
+      cat("\n  ANOVA\n")
+      cat("         F                       : ", F.stat, "\n")
+      cat("         Degrees of freedom      : ", n.clusters-1, "\n")
+      cat("         p-value                 : ", p.value, "\n")
+      cat("                 significativity : ", sig, "\n")
+    }
   }
 }
 
