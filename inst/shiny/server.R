@@ -12,8 +12,10 @@ trainTheSom <- function(data, type, dimx, dimy, disttype, maxit, varnames,
                         radiustype) {
   set.seed(rand.seed)
   
-  if (type=="numeric")
-    data <- data[, varnames]
+  if (type=="numeric") {
+    data <- as.matrix(data[, varnames])
+    if (is.null(colnames(data))) colnames(data) <- varnames
+  }
   trainSOM(data, dimension=c(dimx,dimy), dist.type= disttype, maxit= maxit,
            type= type, scaling= scaling, init.proto= init.proto,
            nb.save= nb.save, radius.type= radiustype)
