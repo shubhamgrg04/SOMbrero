@@ -78,7 +78,7 @@ calculateProtoDist <- function(prototypes, the.grid, type, complete=FALSE,
       setdiff(all.nei[[neuron]],neuron))
     if (type!="relational") {# euclidean case
       distances <- sapply(1:prod(the.grid$dim), function(one.neuron) {
-        apply(prototypes[all.nei[[one.neuron]],],1,distEuclidean,
+        apply(as.matrix(prototypes[all.nei[[one.neuron]],]),1,distEuclidean,
               y=prototypes[one.neuron,])
       })
     } else {
@@ -187,6 +187,7 @@ initProto <- function(parameters, norm.x.data, x.data) {
                          "sd"=as.matrix(parameters$proto0),
                          "cosine"=as.matrix(parameters$proto0))
   }
+  if (is.null(dim(prototypes))) prototypes <- as.matrix(prototypes)
   return(prototypes)
 }
 
@@ -278,6 +279,7 @@ trainSOM <- function (x.data, ...) {
   param.args <- list(...)
   ## Step 1: Parameters handling
   if (!is.matrix(x.data)) x.data <- as.matrix(x.data, rownames.force=TRUE)
+  if (is.null(rownames(x.data))) rownames(x.data) <- paste(1:nrow(x.data))
   
   # Default dimension: nb.obs/10 with minimum equal to 5 and maximum to 10
   if (is.null(param.args$dimension)) {
@@ -557,9 +559,13 @@ summary.somRes <- function(object, ...) {
 }
 
 predict.somRes <- function(object, x.new, ...) {
-  if (is.null(dim(x.new))) x.new <- matrix(x.new,nrow=1,
-                                           dimnames=list(1,
-                                                         colnames(object$data)))
+  if (is.null(dim(x.new))) {
+    if ((object$parameters$type == "numeric") && (ncol(object$data) == 1)) {
+      x.new <- matrix(x.new,ncol=1,dimnames=list(1:length(x.new),
+                                                 colnames(object$data)))
+    } else x.new <- matrix(x.new,nrow=1, 
+                           dimnames=list(1, colnames(object$data)))
+  }
   if ((object$parameters$type %in% c("numeric", "relational")) &&
         (ncol(object$data)!=ncol(x.new)))
     stop("Wrong dimensions for 'x.new': number of columns must correspond ",
