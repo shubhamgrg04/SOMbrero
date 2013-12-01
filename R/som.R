@@ -534,7 +534,6 @@ summary.somRes <- function(object, ...) {
   } else if (object$parameters$type=="relational") {
     sse.total <- sum(object$data)/(2*nrow(object$data))
     
-    size.clust <- table(object$clustering)
     sse.within <- sum(sapply(unique(object$clustering), function(clust)
       sum(object$data[object$clustering==clust,object$clustering==clust])/
                                (2*sum(object$clustering==clust))))

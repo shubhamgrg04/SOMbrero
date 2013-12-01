@@ -87,7 +87,7 @@ summary.somSC <- function(object, ...) {
       sse.total <- sum(object$som$data)/(2*nrow(object$som$data))
       
       sc.clustering <- object$cluster[object$som$clustering]
-      size.clust <- table(sc.clustering)
+      
       sse.within <- sum(sapply(unique(sc.clustering), function(clust)
         sum(object$som$data[sc.clustering==clust,sc.clustering==clust])/
                                  (2*sum(sc.clustering==clust))))
