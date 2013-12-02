@@ -17,6 +17,8 @@ initSOM <- function(dimension=c(5,5), topo=c("square"),
   type <- match.arg(type)
   scaling <- match.arg(scaling, c("unitvar", "none", "center", "chi2", 
                                   "frobenius", "max", "sd", "cosine"))
+  init.proto <- match.arg(init.proto, c("random", "obs", "pca"))
+  
   # check scaling compatibility
   if (type=="korresp" && scaling!="chi2") {
     scaling <- "chi2"
@@ -35,6 +37,10 @@ initSOM <- function(dimension=c(5,5), topo=c("square"),
                "' is not implemented for 'numeric' type\n"),
          call.=TRUE)
   
+  # check init.proto compatibility
+  if (type=="relational" && init.proto=="pca")
+    stop("'init.proto' cannot be 'pca' for 'relational' type\n", call.= TRUE)
+    
   # check proto0
   if (!is.null(proto0)) {
     if (type=="relational") {
@@ -58,13 +64,12 @@ initSOM <- function(dimension=c(5,5), topo=c("square"),
                                      match.arg(dist.type)),
                  type=type, mode=match.arg(mode), maxit=maxit,
                  nb.save=nb.save, proto0=proto0,
-                 init.proto=match.arg(init.proto, c("random","obs")), 
+                 init.proto=init.proto, 
                  scaling=scaling,
                  radius.type=match.arg(radius.type),
                  verbose=verbose, eps0=eps0)
   
-  ## TODO: to add later: other types, other modes (?), init=pca,
-  # and radius.type=gaussian
+  ## TODO: to add later: other types, other modes (?) and radius.type=gaussian
   class(params) <- "paramSOM"
   
   return(params)
