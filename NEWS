@@ -17,7 +17,6 @@ Code improvements:
 Fixed bugs:
   Changed scree plot title and ylabel to "proportion of unexplained variables"
   Fixed "obs" initialization for numeric SOM on one variable 
-  Fixed variable names bug in GUI for one-variable numeric SOM
 
 Misc:
   Added test : equivalence of numeric SOM and relational SOM on squared 
