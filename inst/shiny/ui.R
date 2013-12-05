@@ -282,6 +282,7 @@ to the number of rows ."),
                                                variables)",
                                               choices= "(first import file)",
                                               multiple= TRUE)),
+                 checkboxInput("addplotsc", "Show superclasses", FALSE),
                  plotOutput("addplot"))
       ),
       tabPanel("Help",
