@@ -1,3 +1,5 @@
+## Check that relational SOM gives positive coordinates that sum to 1
+
 library(SOMbrero)
 
 iris.dist <- dist(iris[1:30,1:4], method="minkowski", diag=TRUE, upper=TRUE, 
