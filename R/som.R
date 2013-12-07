@@ -175,18 +175,18 @@ initProto <- function(parameters, norm.x.data, x.data) {
       # numeric and korresp cases
       data.pca <- prcomp(norm.x.data)
       # the more detailed axis is assigned to the first eigenvector
-      if (parameters$the.grid$dim[1]>=parameters$the.grid$dim[2]){
-        x.ev<- 1
-        y.ev<- 2
+      if (parameters$the.grid$dim[1]>=parameters$the.grid$dim[2]) {
+        x.ev <- 1
+        y.ev <- 2
       } else {
-        x.ev<- 2
-        y.ev<- 1
+        x.ev <- 2
+        y.ev <- 1
       }
       x <- seq(from=-2*data.pca$sdev[x.ev], to=2*data.pca$sdev[x.ev],
                length.out=parameters$the.grid$dim[1])
       y <- seq(from=-2*data.pca$sdev[y.ev], to=2*data.pca$sdev[y.ev],
                length.out=parameters$the.grid$dim[2])
-      base <- as.matrix(expand.grid(x= x, y= y))
+      base <- as.matrix(expand.grid(x=x, y=y))
       mapped <- tcrossprod(base, data.pca$rotation[,c(x.ev,y.ev)])
       prototypes <- sweep(mapped,2,data.pca$center,"+")
     }
