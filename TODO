@@ -1,6 +1,5 @@
 
 * other features (easy)
-** 1 add tests for relational (prediction and sanity check for the coefficients)
 ** 2 correct PCA pre-processing
 ** 3 include pre-processing handling in protoDist, quality and SC
 ** add a function graph2SOM that projects a graph on the grid

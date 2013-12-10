@@ -1,12 +1,36 @@
 ## Check that predict.somRes works fine ("numeric" and "relational" cases)
 
 library(SOMbrero)
+data(lesmis)
 
-nsom <- trainSOM(iris[1:30,1:4], maxit=10)
+nsom <- trainSOM(iris[1:30,1:4], maxit=10, scaling= "none")
 stopifnot(identical(predict(nsom, iris[1:30,1:4]), nsom$clustering))
 stopifnot(predict(nsom, iris[1,1:4])==nsom$clustering[1])
 
-data(lesmis)
-rsom <- trainSOM(dissim.lesmis, type="relational", maxit=10)
+nsom <- trainSOM(iris[1:30,1:4], maxit=10, scaling= "center")
+stopifnot(identical(predict(nsom, iris[1:30,1:4]), nsom$clustering))
+stopifnot(predict(nsom, iris[1,1:4])==nsom$clustering[1])
+
+nsom <- trainSOM(iris[1:30,1:4], maxit=10, scaling= "unitvar")
+stopifnot(identical(predict(nsom, iris[1:30,1:4]), nsom$clustering))
+stopifnot(predict(nsom, iris[1,1:4])==nsom$clustering[1])
+
+rsom <- trainSOM(dissim.lesmis, type="relational", maxit=10, scaling= "none")
+stopifnot(identical(predict(rsom, dissim.lesmis), rsom$clustering))
+stopifnot(predict(rsom, dissim.lesmis[1,])==rsom$clustering[1])
+
+rsom <- trainSOM(dissim.lesmis, type="relational", maxit=10, scaling= "sd")
+stopifnot(identical(predict(rsom, dissim.lesmis), rsom$clustering))
+stopifnot(predict(rsom, dissim.lesmis[1,])==rsom$clustering[1])
+
+rsom <- trainSOM(dissim.lesmis, type="relational", maxit=10, scaling= "max")
+stopifnot(identical(predict(rsom, dissim.lesmis), rsom$clustering))
+stopifnot(predict(rsom, dissim.lesmis[1,])==rsom$clustering[1])
+
+rsom <- trainSOM(dissim.lesmis, type="relational", maxit=10, scaling= "frob")
+stopifnot(identical(predict(rsom, dissim.lesmis), rsom$clustering))
+stopifnot(predict(rsom, dissim.lesmis[1,])==rsom$clustering[1])
+
+rsom <- trainSOM(dissim.lesmis, type="relational", maxit=10, scaling= "cosine")
 stopifnot(identical(predict(rsom, dissim.lesmis), rsom$clustering))
 stopifnot(predict(rsom, dissim.lesmis[1,])==rsom$clustering[1])
