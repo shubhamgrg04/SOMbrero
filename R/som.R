@@ -5,21 +5,34 @@
 ################################################################################
 
 # Cosine preprocessing (for "relational" case)
-cosinePreprocess <- function(diss.matrix) {
+cosinePreprocess <- function(diss.matrix, x.new= NULL) {
   # similarity matrix by double centering
   sim.matrix <- -.5* (diag(1, nrow(diss.matrix))- 1/nrow(diss.matrix)) %*%
     diss.matrix %*% (diag(1, nrow(diss.matrix))-1/nrow(diss.matrix))
-  # cosine scaling
-  scaled.ker <- sweep(sweep(sim.matrix,1,sqrt(diag(sim.matrix)),"/"),
-                      2,sqrt(diag(sim.matrix)),"/")  
-  # normalized dissimilarity
-  scaled.diss <- sweep(sweep(-2*scaled.ker,1,diag(scaled.ker),"+"),
-                       2,diag(scaled.ker),"+")
   
-  rownames(scaled.diss) <- rownames(diss.matrix)
-  colnames(scaled.diss) <- colnames(diss.matrix)
-  scaled.diss <- .5*(scaled.diss+t(scaled.diss))
-  sqrt(scaled.diss)
+  if (is.null(x.new)) {
+    # normalize the original dissimilarity matrix
+    scaled.ker <- sweep(sweep(sim.matrix,1,sqrt(diag(sim.matrix)),"/"),
+                        2,sqrt(diag(sim.matrix)),"/")
+    scaled.diss <- 2-2*scaled.ker
+    rownames(scaled.diss) <- rownames(diss.matrix)
+    colnames(scaled.diss) <- colnames(diss.matrix)
+    scaled.diss <- .5*(scaled.diss+t(scaled.diss)) # force symmetry
+    round(scaled.diss,8) # because of numeric instability
+  } else {
+    # normalize additional dissimilarity lines
+    if (is.null(dim(x.new))) x.new <- matrix(x.new, nrow=1)
+    sim.x <- t(apply(x.new, 1, function(x) -.5*(x-mean(x)
+                                                -colMeans(diss.matrix)
+                                                +mean(diss.matrix))))
+    sim.x0 <- apply(x.new, 1, function(x) mean(x)-mean(diss.matrix)/2)
+    scaled.ker.x <- t(sapply(1:nrow(x.new),function(ind) sim.x[ind,]/
+                               sqrt(sim.x0[ind]*diag(sim.matrix))))
+    scaled.diss.x <- 2-2*scaled.ker.x
+    colnames(scaled.diss.x) <- colnames(diss.matrix)
+    rownames(scaled.diss.x) <- rownames(x.new)
+    round(scaled.diss.x,8) # because of numeric instability
+  }
 }
 
 calculateRadius <- function(the.grid, radius.type, ind.t, maxit) {
@@ -595,7 +608,7 @@ predict.somRes <- function(object, x.new, ...) {
                          "max"=as.matrix(x.new)/max(abs(object$data)), 
                          "sd"=as.matrix(x.new)/ 
                            sd(object$data[upper.tri(object$data, diag=FALSE)]),
-                         "cosine"=cosinePreprocess(x.new))
+                         "cosine"=cosinePreprocess(object$data, x.new))
     if (object$parameters$type=="relational") {
       norm.x.data <- switch(object$parameters$scaling,
                             "none"=as.matrix(object$data),
