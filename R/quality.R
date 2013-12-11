@@ -105,15 +105,86 @@ quantizationError <- function(sommap) {
   quantization.error
 }
 
+kaskiLagusError <- function(sommap) {
+  norm.data <- switch(sommap$parameters$scaling,
+                      "unitvar"=scale(sommap$data, center=TRUE, scale=TRUE),
+                      "center"=scale(sommap$data, center=TRUE, scale=FALSE),
+                      "none"=as.matrix(sommap$data),
+                      "chi2"=korrespPreprocess(sommap$data),
+                      "frobenius"=sommap$data/sqrt(sum(sommap$data^2)),
+                      "max"=sommap$data/max(abs(sommap$data)), 
+                      "sd"=sommap$data/
+                        sd(sommap$data[upper.tri(sommap$data,diag=FALSE)]),
+                      "cosine"=cosinePreprocess(sommap$data))
+  norm.proto <- switch(sommap$parameters$scaling,
+                       "unitvar"=scale(sommap$prototypes, 
+                                       center=apply(sommap$data,2,mean),
+                                       scale=apply(sommap$data,2,sd)),
+                       "center"=scale(sommap$prototypes, 
+                                      center=apply(sommap$data,2,mean),
+                                      scale=FALSE),
+                       "none"=sommap$prototypes,
+                       "chi2"=sommap$prototypes,
+                       "frobenius"=sommap$prototypes,
+                       "max"=sommap$prototypes,
+                       "sd"=sommap$prototypes,
+                       "cosine"=sommap$prototypes)
+  # Quantization error and computation of first and second closest prototypes
+  if (sommap$parameters$type=="numeric") {
+    obs.proto.dist <- t(apply(norm.data, 1, 
+                              function(x) sqrt(colSums((t(norm.proto)-x)^2))))
+    winners <- t(apply(obs.proto.dist, 1, function(x) order(x)[1:2]))
+    quantization.error <- mean(obs.proto.dist[cbind(1:nrow(norm.data), 
+                                                    winners[,1])])
+  } else if (sommap$parameters$type=="korresp") {
+    nr <- nrow(sommap$data)
+    nc <- ncol(sommap$data)
+    all.dist.row <- apply(norm.data[1:nr,1:nc], 1, function(x) {
+      colSums((t(norm.proto[,1:nc])-x)^2)
+    })
+    all.dist.col <- apply(norm.data[(nr+1):(nr+nc),(nc+1):(nr+nc)], 1, 
+                          function(x) 
+                            sqrt(colSums((t(norm.proto[,(nc+1):(nr+nc)])-x)^2)))
+    winners <- t(cbind(apply(all.dist.row,2,function(x) order(x)[1:2]),
+                       apply(all.dist.col,2,function(x) order(x)[1:2])))
+    quantization.error <- mean(c(all.dist.row[cbind(winners[1:nr,1],1:nr)],
+                                 all.dist.col[cbind(winners[(nr+1):(nr+nc),1],
+                                                    1:nc)]))
+  } else if (sommap$parameters$type=="relational") {
+    obs.proto.dist <- t(sapply(1:ncol(norm.proto), function(ind) {
+      sqrt(norm.proto%*%norm.data[ind,]-
+             0.5*diag(norm.proto%*%norm.data%*%t(norm.proto)))
+    }))
+    winners <- t(apply(obs.proto.dist,1,function(x) order(x)[1:2]))
+    quantization.error <- mean(obs.proto.dist[cbind(1:nrow(norm.data), 
+                                                    winners[,1])])
+  }
+  
+  # Compute shortest path for all pairs of prototypes
+  proto.dist <- protoDist(sommap, "neighbors")
+  paths <- matrix(NA, ncol= length(proto.dist), nrow= length(proto.dist))
+  for (i.prot in 1:nrow(paths))
+    paths[i.prot, as.numeric(names(proto.dist[[i.prot]]))] <- 
+    proto.dist[[i.prot]]
+  if (sommap$parameters$type=="relational")
+    paths <- sqrt(paths)
+  paths <- allShortestPaths(paths)$length
+  
+  quantization.error + mean(paths[winners])
+}
+
 # main function
 quality.somRes <- function(sommap, quality.type=c("all", "quantization",
-                                                  "topographic"), ...) {
+                                                  "topographic", 
+                                                  "kaski.lagus"), ...) {
   quality.type <- match.arg(quality.type)
   switch(quality.type,
          "all"=list("topographic"=topographicError(sommap),
-                    "quantization"=quantizationError(sommap)),
+                    "quantization"=quantizationError(sommap),
+                    "kaski.lagus"=kaskiLagusError(sommap)),
          "topographic"=topographicError(sommap),
-         "quantization"=quantizationError(sommap)
+         "quantization"=quantizationError(sommap),
+         "kaski.lagus"=kaskiLagusError(sommap)
          )
 }
 

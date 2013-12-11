@@ -4,7 +4,6 @@
    (use projectGraph), create a class and a plot method for it
 ** add weights to observations
 ** radius.type=gaussian
-** kaski lagus
 ** implement weighted graphs projection
 ** change information about maxit (default = 5*n.obs, not 500 as claimed)
 
