@@ -660,11 +660,35 @@ predict.somRes <- function(object, x.new, ...) {
 protoDist.somRes <- function(object, mode=c("complete","neighbors"), ...) {
   mode <- match.arg(mode)
   complete <- (mode=="complete")
+  
+  norm.proto <- switch(object$parameters$scaling,
+                       "unitvar"=scale(object$prototypes, 
+                                       center=apply(object$data,2,mean),
+                                       scale=apply(object$data,2,sd)),
+                       "center"=scale(object$prototypes, 
+                                      center=apply(object$data,2,mean),
+                                      scale=FALSE),
+                       "none"=object$prototypes,
+                       "chi2"=object$prototypes,
+                       "frobenius"=object$prototypes,
+                       "max"=object$prototypes,
+                       "sd"=object$prototypes,
+                       "cosine"=object$prototypes)
+  
   if (object$parameters$type=="relational") {
-    x.data <- object$data
+    x.data <- switch(object$parameters$scaling,
+                     "none"=as.matrix(object$data),
+                     "frobenius"=as.matrix(object$data)/
+                       sqrt(sum(object$data^2)),
+                     "max"=as.matrix(object$data)/
+                       max(abs(object$data)), 
+                     "sd"=as.matrix(object$data)/ 
+                       sd(object$data[upper.tri(object$data,
+                                                diag=FALSE)]),
+                     "cosine"=cosinePreprocess(object$data))
   } else x.data <- NULL
 
-  distances <- calculateProtoDist(object$prototypes, object$parameters$the.grid,
+  distances <- calculateProtoDist(norm.proto, object$parameters$the.grid,
                                   object$parameters$type, complete, x.data)
   
   return(distances)

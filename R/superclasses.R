@@ -17,14 +17,12 @@ dendro3dProcess <- function(v.ind, ind, tree, coord, mat.moy, scatter) {
 superClass.somRes <- function(sommap, method="ward", members=NULL, k=NULL,
                               h=NULL, ...) {
   if (sommap$parameters$type=="relational") {
-    the.distances <- calculateProtoDist(sommap$prototypes,
-                       sommap$parameters$the.grid, 
-                       "relational", TRUE, sommap$data)
+    the.distances <- protoDist(sommap, "complete")
     if (sum(the.distances<0)>0) {
       stop("Impossible to make super clustering!", call.=TRUE)
     } else the.distances <- as.dist(the.distances)
   }
-  else the.distances <- dist(sommap$prototypes)^2
+  else the.distances <- as.dist(protoDist(sommap, "complete")^2)
   hc <- hclust(the.distances, method, members)
   if (!is.null(k) || !is.null(h)) {
     sc <- cutree(hc, k, h)
