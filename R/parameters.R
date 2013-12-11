@@ -38,8 +38,8 @@ initSOM <- function(dimension=c(5,5), topo=c("square"),
          call.=TRUE)
   
   # check init.proto compatibility
-  if (type=="relational" && init.proto=="pca")
-    stop("'init.proto' cannot be 'pca' for 'relational' type\n", call.= TRUE)
+  if (type=="korresp" && init.proto=="pca")
+    stop("'init.proto' cannot be 'pca' for 'korresp' type\n", call.= TRUE)
     
   # check proto0
   if (!is.null(proto0)) {

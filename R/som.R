@@ -185,9 +185,7 @@ initProto <- function(parameters, norm.x.data, x.data) {
                                 replace=TRUE))] <- 1
       }
     } else if (parameters$init.proto=="pca") {
-      # numeric and korresp cases
-      data.pca <- prcomp(norm.x.data)
-      # the more detailed axis is assigned to the first eigenvector
+      # the more detailed grid axis is assigned to the first component
       if (parameters$the.grid$dim[1]>=parameters$the.grid$dim[2]) {
         x.ev <- 1
         y.ev <- 2
@@ -195,13 +193,35 @@ initProto <- function(parameters, norm.x.data, x.data) {
         x.ev <- 2
         y.ev <- 1
       }
-      x <- seq(from=-2*data.pca$sdev[x.ev], to=2*data.pca$sdev[x.ev],
-               length.out=parameters$the.grid$dim[1])
-      y <- seq(from=-2*data.pca$sdev[y.ev], to=2*data.pca$sdev[y.ev],
-               length.out=parameters$the.grid$dim[2])
-      base <- as.matrix(expand.grid(x=x, y=y))
-      mapped <- tcrossprod(base, data.pca$rotation[,c(x.ev,y.ev)])
-      prototypes <- sweep(mapped,2,data.pca$center,"+")
+      if (parameters$type=="numeric") {
+        data.pca <- prcomp(norm.x.data)
+        x <- seq(from=quantile(data.pca$x[,x.ev], .025), 
+                 to=quantile(data.pca$x[,x.ev], .975),
+                 length.out=parameters$the.grid$dim[1])
+        y <- seq(from=quantile(data.pca$x[,y.ev], .025), 
+                 to=quantile(data.pca$x[,y.ev], .975),
+                 length.out=parameters$the.grid$dim[2])
+        base <- as.matrix(expand.grid(x=x, y=y))
+        closest.obs <- apply(base, 1, function(point) 
+          order(colSums((t(data.pca$x[,1:2])-point)^2))[1])
+        base <- data.pca$x[closest.obs,1:2]
+        mapped <- tcrossprod(base, data.pca$rotation[,c(x.ev, y.ev)])
+        prototypes <- sweep(mapped,2,data.pca$center,"+")
+      } else if (parameters$type=="relational") {
+        data.mds <- cmdscale(norm.x.data)
+        x <- seq(from=quantile(data.mds[,x.ev], .025), 
+                 to=quantile(data.mds[,x.ev], .975),
+                 length.out=parameters$the.grid$dim[1])
+        y <- seq(from=quantile(data.mds[,y.ev], .025), 
+                 to=quantile(data.mds[,y.ev], .975),
+                 length.out=parameters$the.grid$dim[2])
+        base <- as.matrix(expand.grid(x=x, y=y))
+        closest.obs <- apply(base, 1, function(point) 
+          order(colSums((t(data.mds[,1:2])-point)^2))[1])
+        prototypes <- matrix(0, ncol=nrow(norm.x.data), 
+                             nrow=prod(parameters$the.grid$dim))
+        prototypes[cbind(1:prod(parameters$the.grid$dim),closest.obs)] <- 1
+      }
     }
   } else {
     prototypes <- switch(parameters$scaling,
