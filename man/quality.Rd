@@ -30,7 +30,7 @@ function of the size of the map.
 
 The topographic error is the simplest of the topology preservation measure: it
 calculates the ratio of sample vectors for which the second best matching unit
-is in the direct neighborhood of the best matching unit.
+is not in the direct neighborhood of the best matching unit.
 
 The Kaski-Lagus error combines the quantization and topographic aspects into a
 single measure. It is the sum of the mean (euclidean) distance between the 
