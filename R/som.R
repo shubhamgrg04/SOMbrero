@@ -35,6 +35,36 @@ cosinePreprocess <- function(diss.matrix, x.new= NULL) {
   }
 }
 
+# Preprocess data or prototypes
+preprocessData <- function(x.data, scaling) {
+  switch(scaling,
+         "unitvar"=scale(x.data, center=TRUE, scale=TRUE),
+         "center"=scale(x.data, center=TRUE, scale=FALSE),
+         "none"=as.matrix(x.data),
+         "chi2"=korrespPreprocess(x.data),
+         "frobenius"=x.data/sqrt(sum(x.data^2)),
+         "max"=x.data/max(abs(x.data)), 
+         "sd"=x.data/
+           sd(x.data[upper.tri(x.data,diag=FALSE)]),
+         "cosine"=cosinePreprocess(x.data))
+}
+
+preprocessProto <- function(prototypes, scaling, x.data) {
+  switch(scaling,
+         "unitvar"=scale(prototypes, 
+                         center=apply(x.data,2,mean),
+                         scale=apply(x.data,2,sd)),
+         "center"=scale(prototypes, 
+                        center=apply(x.data,2,mean),
+                        scale=FALSE),
+         "none"=as.matrix(prototypes),
+         "chi2"=as.matrix(prototypes),
+         "frobenius"=as.matrix(prototypes),
+         "max"=as.matrix(prototypes), 
+         "sd"=as.matrix(prototypes),
+         "cosine"=as.matrix(prototypes))
+}
+
 calculateRadius <- function(the.grid, radius.type, ind.t, maxit) {
   ## TODO: implement other radius types
   # ind.t: iteration index
@@ -223,21 +253,8 @@ initProto <- function(parameters, norm.x.data, x.data) {
         prototypes[cbind(1:prod(parameters$the.grid$dim),closest.obs)] <- 1
       }
     }
-  } else {
-    prototypes <- switch(parameters$scaling,
-                         "unitvar"=scale(parameters$proto0, 
-                                         center=apply(x.data,2,mean),
-                                         scale=apply(x.data,2,sd)),
-                         "center"=scale(parameters$proto0, 
-                                        center=apply(x.data,2,mean),
-                                        scale=FALSE),
-                         "none"=as.matrix(parameters$proto0),
-                         "chi2"=as.matrix(parameters$proto0),
-                         "frobenius"=as.matrix(parameters$proto0),
-                         "max"=as.matrix(parameters$proto0), 
-                         "sd"=as.matrix(parameters$proto0),
-                         "cosine"=as.matrix(parameters$proto0))
-  }
+  } else prototypes <- preprocessProto(parameters$proto0, parameters$scaling,
+                                       x.data)
   return(prototypes)
 }
 
@@ -381,16 +398,7 @@ trainSOM <- function (x.data, ...) {
   
   ## Step 2: Preprocess the data
   # Scaling
-  norm.x.data <- switch(parameters$scaling,
-                        "unitvar"=scale(x.data, center=TRUE, scale=TRUE),
-                        "center"=scale(x.data, center=TRUE, scale=FALSE),
-                        "none"=as.matrix(x.data),
-                        "chi2"=korrespPreprocess(x.data),
-                        "frobenius"=x.data/sqrt(sum(x.data^2)),
-                        "max"=x.data/max(abs(x.data)), 
-                        "sd"=x.data/
-                          sd(x.data[upper.tri(x.data,diag=FALSE)]),
-                        "cosine"=cosinePreprocess(x.data))
+  norm.x.data <- preprocessData(x.data, parameters$scaling)
   
   ## Step 3: Initialize prototypes
   prototypes <- initProto(parameters, norm.x.data, x.data)
@@ -630,29 +638,10 @@ predict.somRes <- function(object, x.new, ...) {
                            sd(object$data[upper.tri(object$data, diag=FALSE)]),
                          "cosine"=cosinePreprocess(object$data, x.new))
     if (object$parameters$type=="relational") {
-      norm.x.data <- switch(object$parameters$scaling,
-                            "none"=as.matrix(object$data),
-                            "frobenius"=as.matrix(object$data)/
-                              sqrt(sum(object$data^2)),
-                            "max"=as.matrix(object$data)/
-                              max(abs(object$data)), 
-                            "sd"=as.matrix(object$data)/ 
-                              sd(object$data[upper.tri(object$data,
-                                                       diag=FALSE)]),
-                            "cosine"= cosinePreprocess(object$data))
+      norm.x.data <- preprocessData(object$data, object$parameters$scaling)
     } else norm.x.data <- NULL
-    norm.proto <- switch(object$parameters$scaling,
-                         "unitvar"=scale(object$prototypes, 
-                                         center=apply(object$data,2,mean),
-                                         scale=apply(object$data,2,sd)),
-                         "center"=scale(object$prototypes, 
-                                        center=apply(object$data,2,mean),
-                                        scale=FALSE),
-                         "none"=object$prototypes,
-                         "frobenius"=object$prototypes,
-                         "max"=object$prototypes,
-                         "sd"=object$prototypes,
-                         "cosine"=object$prototypes)
+    norm.proto <- preprocessProto(object$prototypes, object$parameters$scaling,
+                                  object$data)
     winners <- apply(norm.x.new, 1, oneObsAffectation,
                      prototypes=norm.proto, type=object$parameters$type,
                      x.data=norm.x.data)
@@ -680,37 +669,14 @@ predict.somRes <- function(object, x.new, ...) {
 protoDist.somRes <- function(object, mode=c("complete","neighbors"), ...) {
   mode <- match.arg(mode)
   complete <- (mode=="complete")
-  
-  norm.proto <- switch(object$parameters$scaling,
-                       "unitvar"=scale(object$prototypes, 
-                                       center=apply(object$data,2,mean),
-                                       scale=apply(object$data,2,sd)),
-                       "center"=scale(object$prototypes, 
-                                      center=apply(object$data,2,mean),
-                                      scale=FALSE),
-                       "none"=object$prototypes,
-                       "chi2"=object$prototypes,
-                       "frobenius"=object$prototypes,
-                       "max"=object$prototypes,
-                       "sd"=object$prototypes,
-                       "cosine"=object$prototypes)
-  
+  norm.proto <- preprocessProto(object$prototypes, object$parameters$scaling, 
+                                object$data)
   if (object$parameters$type=="relational") {
-    x.data <- switch(object$parameters$scaling,
-                     "none"=as.matrix(object$data),
-                     "frobenius"=as.matrix(object$data)/
-                       sqrt(sum(object$data^2)),
-                     "max"=as.matrix(object$data)/
-                       max(abs(object$data)), 
-                     "sd"=as.matrix(object$data)/ 
-                       sd(object$data[upper.tri(object$data,
-                                                diag=FALSE)]),
-                     "cosine"=cosinePreprocess(object$data))
+    x.data <- preprocessData(object$data, object$parameters$scaling)
   } else x.data <- NULL
 
   distances <- calculateProtoDist(norm.proto, object$parameters$the.grid,
                                   object$parameters$type, complete, x.data)
-  
   return(distances)
 }
 

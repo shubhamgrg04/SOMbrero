@@ -1,28 +1,7 @@
 topographicError <- function (sommap) {
-  norm.data <- switch(sommap$parameters$scaling,
-                        "unitvar"=scale(sommap$data, center=TRUE, scale=TRUE),
-                        "center"=scale(sommap$data, center=TRUE, scale=FALSE),
-                        "none"=as.matrix(sommap$data),
-                        "chi2"=korrespPreprocess(sommap$data),
-                        "frobenius"=sommap$data/sqrt(sum(sommap$data^2)),
-                        "max"=sommap$data/max(abs(sommap$data)), 
-                        "sd"=sommap$data/
-                          sd(sommap$data[upper.tri(sommap$data,diag=FALSE)]),
-                        "cosine"=cosinePreprocess(sommap$data))
-  norm.proto <- switch(sommap$parameters$scaling,
-                       "unitvar"=scale(sommap$prototypes, 
-                                       center=apply(sommap$data,2,mean),
-                                       scale=apply(sommap$data,2,sd)),
-                       "center"=scale(sommap$prototypes, 
-                                      center=apply(sommap$data,2,mean),
-                                      scale=FALSE),
-                       "none"=sommap$prototypes,
-                       "chi2"=sommap$prototypes,
-                       "frobenius"=sommap$prototypes,
-                       "max"=sommap$prototypes,
-                       "sd"=sommap$prototypes,
-                       "cosine"=sommap$prototypes)
-  
+  norm.data <- preprocessData(sommap$data, sommap$parameters$scaling)
+  norm.proto <- preprocessProto(sommap$prototypes, sommap$parameters$scaling,
+                                sommap$data)
   if (sommap$parameters$type=="numeric") {
     all.dist <- apply(norm.data, 1, function(x) {
       apply(norm.proto,1,function(y) sum((x-y)^2) )
@@ -55,30 +34,9 @@ topographicError <- function (sommap) {
 }
 
 quantizationError <- function(sommap) {
-  norm.data <- switch(sommap$parameters$scaling,
-                      "unitvar"=scale(sommap$data, center=TRUE, scale=TRUE),
-                      "center"=scale(sommap$data, center=TRUE, scale=FALSE),
-                      "none"=as.matrix(sommap$data),
-                      "chi2"=korrespPreprocess(sommap$data),
-                      "frobenius"=sommap$data/sqrt(sum(sommap$data^2)),
-                      "max"=sommap$data/max(abs(sommap$data)), 
-                      "sd"=sommap$data/
-                        sd(sommap$data[upper.tri(sommap$data,diag=FALSE)]),
-                      "cosine"=cosinePreprocess(sommap$data))
-  norm.proto <- switch(sommap$parameters$scaling,
-                       "unitvar"=scale(sommap$prototypes, 
-                                       center=apply(sommap$data,2,mean),
-                                       scale=apply(sommap$data,2,sd)),
-                       "center"=scale(sommap$prototypes, 
-                                      center=apply(sommap$data,2,mean),
-                                      scale=FALSE),
-                       "none"=sommap$prototypes,
-                       "chi2"=sommap$prototypes,
-                       "frobenius"=sommap$prototypes,
-                       "max"=sommap$prototypes,
-                       "sd"=sommap$prototypes,
-                       "cosine"=sommap$prototypes)
-
+  norm.data <- preprocessData(sommap$data, sommap$parameters$scaling)
+  norm.proto <- preprocessProto(sommap$prototypes, sommap$parameters$scaling,
+                                sommap$data)
   if (sommap$parameters$type=="numeric") {
     quantization.error <- sum(apply((norm.data-
                                        norm.proto[sommap$clustering,])^2,
@@ -106,29 +64,9 @@ quantizationError <- function(sommap) {
 }
 
 kaskiLagusError <- function(sommap) {
-  norm.data <- switch(sommap$parameters$scaling,
-                      "unitvar"=scale(sommap$data, center=TRUE, scale=TRUE),
-                      "center"=scale(sommap$data, center=TRUE, scale=FALSE),
-                      "none"=as.matrix(sommap$data),
-                      "chi2"=korrespPreprocess(sommap$data),
-                      "frobenius"=sommap$data/sqrt(sum(sommap$data^2)),
-                      "max"=sommap$data/max(abs(sommap$data)), 
-                      "sd"=sommap$data/
-                        sd(sommap$data[upper.tri(sommap$data,diag=FALSE)]),
-                      "cosine"=cosinePreprocess(sommap$data))
-  norm.proto <- switch(sommap$parameters$scaling,
-                       "unitvar"=scale(sommap$prototypes, 
-                                       center=apply(sommap$data,2,mean),
-                                       scale=apply(sommap$data,2,sd)),
-                       "center"=scale(sommap$prototypes, 
-                                      center=apply(sommap$data,2,mean),
-                                      scale=FALSE),
-                       "none"=sommap$prototypes,
-                       "chi2"=sommap$prototypes,
-                       "frobenius"=sommap$prototypes,
-                       "max"=sommap$prototypes,
-                       "sd"=sommap$prototypes,
-                       "cosine"=sommap$prototypes)
+  norm.data <- preprocessData(sommap$data, sommap$parameters$scaling)
+  norm.proto <- preprocessProto(sommap$prototypes, sommap$parameters$scaling,
+                                sommap$data)
   # Quantization error and computation of first and second closest prototypes
   if (sommap$parameters$type=="numeric") {
     obs.proto.dist <- t(apply(norm.data, 1, 
