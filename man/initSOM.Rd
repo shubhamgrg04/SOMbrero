@@ -24,7 +24,7 @@ initSOM(dimension=c(5,5), topo=c("square"),
                        "numeric"="unitvar",
                        "relational"="none",
                        "korresp"="chi2"), 
-        radius.type=c("letremy"), eps0=1)
+        radius.type=c("letremy", "gaussian"), eps0=1)
 \method{print}{paramSOM}(x, \ldots)
 \method{summary}{paramSOM}(object, \ldots)
 }

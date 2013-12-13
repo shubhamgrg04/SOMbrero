@@ -13,7 +13,7 @@ initSOM <- function(dimension=c(5,5), topo=c("square"),
                                    "numeric"="unitvar",
                                    "relational"="none",
                                    "korresp"="chi2"), 
-                    radius.type=c("letremy"), eps0=1) {
+                    radius.type=c("letremy", "gaussian"), eps0=1) {
   type <- match.arg(type)
   scaling <- match.arg(scaling, c("unitvar", "none", "center", "chi2", 
                                   "frobenius", "max", "sd", "cosine"))

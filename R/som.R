@@ -66,13 +66,12 @@ preprocessProto <- function(prototypes, scaling, x.data) {
 }
 
 calculateRadius <- function(the.grid, radius.type, ind.t, maxit) {
-  ## TODO: implement other radius types
   # ind.t: iteration index
+  r0 <- max(floor(the.grid$dim/2))
+  a <- floor(maxit/2)
+  b <- floor(maxit*3/4)
   if (radius.type=="letremy") {
-    r0 <- max(c(floor(the.grid$dim[1]/2), floor(the.grid$dim[2]/2)))
     k <- 4*(r0-1)/maxit
-    a <- floor(maxit/2)
-    b <- floor(maxit*3/4)
     r <- ceiling(r0/(1+k*ind.t))
     if (ind.t==1) {
       r <- r0
@@ -81,6 +80,12 @@ calculateRadius <- function(the.grid, radius.type, ind.t, maxit) {
     } else if (ind.t>=b) {
       r <- 0
     }
+  } else if (radius.type=="gaussian") {
+    if (ind.t<a) {
+      r <- r0 + ind.t*(1-r0)/(maxit/2)
+    } else if (ind.t>=a & ind.t<b) {
+      r <- 1
+    } else r <- .1
   }
   r
 }
@@ -102,6 +107,14 @@ selectNei <- function(the.neuron, the.grid, radius) {
     the.nei <- which(the.dist<=radius)
   }
   the.nei
+}
+
+gaussianNei <- function(the.neuron, the.grid, radius) {
+  dist.type <- ifelse(the.grid$dist.type=="letremy",
+                      "maximum", the.grid$dist.type)
+  proto.dist <- as.matrix(dist(the.grid$coord, upper=TRUE, 
+                               diag=TRUE, method= dist.type))
+  exp(-proto.dist[the.neuron,]^2/(2*radius^2))
 }
 
 # Functions to manipulate objects in the input space
@@ -281,14 +294,17 @@ oneObsAffectation <- function(x.new, prototypes, type, x.data=NULL) {
 
 # Step 7: Update of prototypes
 prototypeUpdate <- function(type, the.nei, epsilon, prototypes, rand.ind,
-                            sel.obs) {
+                            sel.obs, radius.type) {
+  if (radius.type=="letremy") 
+    the.nei <- as.numeric((1:nrow(prototypes))%in%the.nei)
+  
   if (type=="relational") {
-    indic <- matrix(0,nrow=length(the.nei),ncol=ncol(prototypes)) 
+    indic <- matrix(0, nrow=nrow(prototypes), ncol=ncol(prototypes)) 
     indic[,rand.ind] <- 1
-    prototypes[the.nei,] <- (1-epsilon)*prototypes[the.nei,] + epsilon*indic    
+    prototypes <- (1-epsilon*the.nei)*prototypes + epsilon*the.nei*indic    
   } else {
-    prototypes[the.nei,] <- (1-epsilon)*prototypes[the.nei,] +
-      epsilon*outer(rep(1,length(the.nei)), sel.obs)
+    prototypes <- (1-epsilon*the.nei)*prototypes + 
+      epsilon*the.nei*outer(rep(1,nrow(prototypes)), sel.obs)
   }
 }
 
@@ -445,14 +461,20 @@ trainSOM <- function (x.data, ...) {
                                 norm.x.data)
     
     ## Step 7: Representation step
-    # Radius value
+    # Neighborhood
     radius <- calculateRadius(parameters$the.grid, parameters$radius.type,
                               ind.t, parameters$maxit)
-    the.nei <- selectNei(winner, parameters$the.grid, radius)
+    if (parameters$radius.type=="letremy") {
+      the.nei <- selectNei(winner, parameters$the.grid, radius)
+    } else if (parameters$radius.type=="gaussian") {
+      the.nei <- gaussianNei(winner, parameters$the.grid, radius)
+    }
+    # Learning rate
     epsilon <- 0.3*parameters$eps0/(1+0.2*ind.t/prod(parameters$the.grid$dim))
     # Update
-    prototypes[the.nei,] <- prototypeUpdate(parameters$type, the.nei, epsilon, 
-                                            prototypes, rand.ind, sel.obs)
+    prototypes <- prototypeUpdate(parameters$type, the.nei, epsilon, 
+                                  prototypes, rand.ind, sel.obs, 
+                                  parameters$radius.type)
     
     ## Step 8: Intermediate backups (if needed)
     if (parameters$nb.save==1) {
