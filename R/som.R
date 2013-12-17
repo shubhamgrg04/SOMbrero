@@ -246,7 +246,7 @@ initProto <- function(parameters, norm.x.data, x.data) {
                  length.out=parameters$the.grid$dim[2])
         base <- as.matrix(expand.grid(x=x, y=y))
         closest.obs <- apply(base, 1, function(point) 
-          order(colSums((t(data.pca$x[,1:2])-point)^2))[1])
+          which.min(colSums((t(data.pca$x[,1:2])-point)^2)))
         base <- data.pca$x[closest.obs,1:2]
         mapped <- tcrossprod(base, data.pca$rotation[,c(x.ev, y.ev)])
         prototypes <- sweep(mapped,2,data.pca$center,"+")
@@ -260,7 +260,7 @@ initProto <- function(parameters, norm.x.data, x.data) {
                  length.out=parameters$the.grid$dim[2])
         base <- as.matrix(expand.grid(x=x, y=y))
         closest.obs <- apply(base, 1, function(point) 
-          order(colSums((t(data.mds[,1:2])-point)^2))[1])
+          which.min(colSums((t(data.mds[,1:2])-point)^2)))
         prototypes <- matrix(0, ncol=nrow(norm.x.data), 
                              nrow=prod(parameters$the.grid$dim))
         prototypes[cbind(1:prod(parameters$the.grid$dim),closest.obs)] <- 1
