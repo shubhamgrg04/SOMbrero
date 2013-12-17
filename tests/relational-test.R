@@ -10,27 +10,3 @@ rsom <- trainSOM(x.data=iris.dist, type="relational", maxit= 10,
 stopifnot(all.equal(as.vector(rowSums(rsom$prototypes)), 
                     rep(1, prod(rsom$parameters$the.grid$dim))))
 stopifnot(!sum(rsom$prototypes<0))
-
-rsom <- trainSOM(x.data=iris.dist, type="relational", maxit= 10, 
-                 scaling= "sd")
-stopifnot(all.equal(as.vector(rowSums(rsom$prototypes)), 
-                    rep(1, prod(rsom$parameters$the.grid$dim))))
-stopifnot(!sum(rsom$prototypes<0))
-
-rsom <- trainSOM(x.data=iris.dist, type="relational", maxit= 10, 
-                 scaling= "max")
-stopifnot(all.equal(as.vector(rowSums(rsom$prototypes)), 
-                    rep(1, prod(rsom$parameters$the.grid$dim))))
-stopifnot(!sum(rsom$prototypes<0))
-
-rsom <- trainSOM(x.data=iris.dist, type="relational", maxit= 10, 
-                 scaling= "frobenius")
-stopifnot(all.equal(as.vector(rowSums(rsom$prototypes)), 
-                    rep(1, prod(rsom$parameters$the.grid$dim))))
-stopifnot(!sum(rsom$prototypes<0))
-
-rsom <- trainSOM(x.data=iris.dist, type="relational", maxit= 10, 
-                 scaling= "cosine")
-stopifnot(all.equal(as.vector(rowSums(rsom$prototypes)), 
-                    rep(1, prod(rsom$parameters$the.grid$dim))))
-stopifnot(!sum(rsom$prototypes<0))

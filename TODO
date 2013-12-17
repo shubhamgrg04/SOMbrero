@@ -1,6 +1,5 @@
 * additional corrections
-** in relational-test, checking all scaling is useless: remove them BUT (what I
-asked) you have to check that manual scaling leads to equivalent results in
+** check that manual scaling leads to equivalent results in
 Euclidean/Relational tests
 ** normalization: use it for ANOVA
 ** normalization: check if an option 'preprocessData(, inv=TRUE)' would be 
