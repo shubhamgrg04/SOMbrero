@@ -3,6 +3,14 @@
 ** in relational-test, checking all scaling is useless: remove them BUT (what I
 asked) you have to check that manual scaling leads to equivalent results in
 Euclidean/Relational tests
+** normalization: use it for ANOVA
+** normalization: check if an option 'preprocessData(, inv=TRUE)' would be 
+useful to de-normalize; check if 'prepropcessData(, x.new=) would be useful. If
+so, implement it and propagate it everywhere
+** PCA initialization: in help page, explain that for relational an MDS approach
+(equivalent to a 'relational' PCA is made)
+** PCA initialization: use which.min instead of order()[1]
+
 
 * other features (easy)
 ** add a function graph2SOM that projects a graph on the grid
