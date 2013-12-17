@@ -1,6 +1,4 @@
 * additional corrections
-** check that manual scaling leads to equivalent results in
-Euclidean/Relational tests
 ** normalization: use it for ANOVA
 ** normalization: check if an option 'preprocessData(, inv=TRUE)' would be 
 useful to de-normalize; check if 'prepropcessData(, x.new=) would be useful. If
