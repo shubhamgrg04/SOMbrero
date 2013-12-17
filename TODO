@@ -10,6 +10,9 @@ so, implement it and propagate it everywhere
 ** PCA initialization: in help page, explain that for relational an MDS approach
 (equivalent to a 'relational' PCA is made)
 ** PCA initialization: use which.min instead of order()[1]
+** KL error: add it to the next report
+** Gaussian kernel: see again the way it is implemented. Make it consistent with
+selectNei
 
 
 * other features (easy)
