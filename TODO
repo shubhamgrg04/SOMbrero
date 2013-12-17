@@ -1,3 +1,8 @@
+* additional corrections
+** add a test in prediction-test for korresp as well
+** in relational-test, checking all scaling is useless: remove them BUT (what I
+asked) you have to check that manual scaling leads to equivalent results in
+Euclidean/Relational tests
 
 * other features (easy)
 ** add a function graph2SOM that projects a graph on the grid

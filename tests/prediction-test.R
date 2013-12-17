@@ -27,7 +27,8 @@ rsom <- trainSOM(dissim.lesmis, type="relational", maxit=10, scaling= "max")
 stopifnot(identical(predict(rsom, dissim.lesmis), rsom$clustering))
 stopifnot(predict(rsom, dissim.lesmis[1,])==rsom$clustering[1])
 
-rsom <- trainSOM(dissim.lesmis, type="relational", maxit=10, scaling= "frob")
+rsom <- trainSOM(dissim.lesmis, type="relational", maxit=10,
+                 scaling= "frobenius")
 stopifnot(identical(predict(rsom, dissim.lesmis), rsom$clustering))
 stopifnot(predict(rsom, dissim.lesmis[1,])==rsom$clustering[1])
 
