@@ -1,5 +1,4 @@
 * additional corrections
-** normalization: use it for ANOVA
 ** normalization: check if an option 'preprocessData(, inv=TRUE)' would be 
 useful to de-normalize; check if 'prepropcessData(, x.new=) would be useful. If
 so, implement it and propagate it everywhere
