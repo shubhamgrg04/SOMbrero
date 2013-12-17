@@ -55,7 +55,8 @@ initSOM(dimension=c(5,5), topo=c("square"),
   a random observation) or \code{pca}. In \code{pca} the prototypes are 
   initialized to the observations closest to a grid along the two first 
   principal components of the data (\code{numeric} case) or a two-dimensional
-  multidimensional scaling (\code{relational} case). Default value is 
+  multidimensional scaling (\code{relational} case, equivalent to a 
+  \code{relational} PCA). Default value is 
   \code{random} for the \code{numeric} and \code{korresp} types, and 
   \code{obs} for the \code{relational} type. \code{pca} is not available for
   \code{korresp} SOM.}
