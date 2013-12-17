@@ -2,6 +2,7 @@
 
 library(SOMbrero)
 data(lesmis)
+data(presidentielles2002)
 
 nsom <- trainSOM(iris[1:30,1:4], maxit=10, scaling= "none")
 stopifnot(identical(predict(nsom, iris[1:30,1:4]), nsom$clustering))
@@ -35,3 +36,6 @@ stopifnot(predict(rsom, dissim.lesmis[1,])==rsom$clustering[1])
 rsom <- trainSOM(dissim.lesmis, type="relational", maxit=10, scaling= "cosine")
 stopifnot(identical(predict(rsom, dissim.lesmis), rsom$clustering))
 stopifnot(predict(rsom, dissim.lesmis[1,])==rsom$clustering[1])
+
+korr <- trainSOM(presidentielles2002, type= "korresp", maxit= 10)
+stopifnot(identical(predict(korr, presidentielles2002), korr$clustering))

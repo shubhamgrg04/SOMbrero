@@ -1,5 +1,4 @@
 * additional corrections
-** add a test in prediction-test for korresp as well
 ** in relational-test, checking all scaling is useless: remove them BUT (what I
 asked) you have to check that manual scaling leads to equivalent results in
 Euclidean/Relational tests
