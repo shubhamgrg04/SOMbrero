@@ -18,6 +18,7 @@ Code improvements:
 
 Fixed bugs:
   Changed scree plot title and ylabel to "proportion of unexplained variables"
+  Fixed computation of energy for relational SOM
 
 Misc:
   Added test : equivalence of numeric SOM and relational SOM on squared 

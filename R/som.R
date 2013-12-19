@@ -312,48 +312,31 @@ prototypeUpdate <- function(type, the.nei, epsilon, prototypes, rand.ind,
 # TODO: It would probably be better to implement a function 'distEltProto'
 calculateClusterEnergy <- function(cluster, x.data, clustering, prototypes,
                                    parameters, radius) {
+  the.nei <- selectNei(cluster, parameters$the.grid, radius, 
+                       parameters$radius.type)
+  if (parameters$radius.type=="letremy")
+    the.nei <- as.numeric((1:nrow(prototypes))%in%the.nei)
+  
   if (parameters$type=="numeric" || parameters$type=="korresp") {
-    if (parameters$radius.type=="letremy") {
-      the.nei <- selectNei(cluster, parameters$the.grid, radius)
-      if (sum(clustering%in%the.nei)>0) {
-        return(sum((x.data[which(clustering%in%the.nei),]-
-                      outer(rep(1,sum(clustering%in%the.nei)),
-                            prototypes[cluster,]))^2))
-      }
-    }
+    return(sum(the.nei[clustering]*
+                 rowSums((x.data-outer(rep(1,nrow(x.data)), 
+                                       prototypes[cluster,]))^2)))
   } else if (parameters$type=="relational") {
-    if (parameters$radius.type=="letremy") {
-      the.nei <- selectNei(cluster, parameters$the.grid, radius)
-      if (sum(clustering%in%the.nei)>0) {
-        return(sum(prototypes%*%x.data[,which(clustering%in%the.nei)]-0.5*
-                     diag(prototypes%*%x.data%*%t(prototypes))))
-      }      
-    }
+    return(sum(the.nei[clustering]*
+                 (matrix(prototypes[cluster,], nrow=1)%*%x.data-
+                    as.numeric(0.5*matrix(prototypes[cluster,], nrow=1)%*%
+                                 x.data%*%matrix(prototypes[cluster,]))
+                 )))
   }
 }
 
 calculateEnergy <- function(x.data, clustering, prototypes, parameters, ind.t) {
-  if (parameters$type=="numeric" || parameters$type=="korresp") {
-    if (parameters$radius.type=="letremy") {
-      radius <- calculateRadius(parameters$the.grid, parameters$radius.type,
-                                ind.t, parameters$maxit)
-      return(sum(unlist(sapply(1:nrow(prototypes), calculateClusterEnergy,
-                               x.data=x.data, clustering=clustering, 
-                               prototypes=prototypes, parameters=parameters,
-                               radius=radius)))/
-               nrow(x.data)/nrow(prototypes))
-    }
-  } else if (parameters$type=="relational") {
-    if (parameters$radius.type=="letremy") {
-      radius <- calculateRadius(parameters$the.grid, parameters$radius.type,
-                                ind.t, parameters$maxit)
-      return(sum(unlist(sapply(1:nrow(prototypes), calculateClusterEnergy,
-                               x.data=x.data, clustering=clustering, 
-                               prototypes=prototypes, parameters=parameters,
-                               radius=radius)))/
-               nrow(x.data)/nrow(prototypes))
-    }
-  }
+  radius <- calculateRadius(parameters$the.grid, parameters$radius.type,
+                            ind.t, parameters$maxit)
+  sum(unlist(sapply(1:nrow(prototypes), calculateClusterEnergy,
+                    x.data=x.data, clustering=clustering, 
+                    prototypes=prototypes, parameters=parameters,
+                    radius=radius)))/nrow(x.data)/nrow(prototypes)
 }
 
 ##### Main function
