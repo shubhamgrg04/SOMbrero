@@ -177,6 +177,18 @@ shinyServer(function(input, output, session) {
                                  "relational"= "obs"))
   })
 
+  # update default distance type when radius type is changed
+  output$disttype <- renderUI({
+    selectInput("disttype", "Distance type:", 
+                c("letremy"="letremy", "maximum"="maximum",
+                  "euclidean"="euclidean", "manhattan"="manhattan",
+                  "canberra"="canberra", "binary"="binary",
+                  "minkowski"="minkowski"),
+                selected= switch(input$radiustype, 
+                                 "letremy"= "letremy",
+                                 "gaussian"= "euclidean"))
+  })
+
   # Train the SOM when the button is hit
   theSom<- function() {
     input$trainbutton

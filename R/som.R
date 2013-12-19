@@ -67,10 +67,10 @@ preprocessProto <- function(prototypes, scaling, x.data) {
 
 calculateRadius <- function(the.grid, radius.type, ind.t, maxit) {
   # ind.t: iteration index
-  r0 <- max(floor(the.grid$dim/2))
-  a <- floor(maxit/2)
-  b <- floor(maxit*3/4)
   if (radius.type=="letremy") {
+    r0 <- max(floor(the.grid$dim/2))
+    a <- floor(maxit/2)
+    b <- floor(maxit*3/4)
     k <- 4*(r0-1)/maxit
     r <- ceiling(r0/(1+k*ind.t))
     if (ind.t==1) {
@@ -81,40 +81,39 @@ calculateRadius <- function(the.grid, radius.type, ind.t, maxit) {
       r <- 0
     }
   } else if (radius.type=="gaussian") {
-    if (ind.t<a) {
-      r <- r0 + ind.t*(1-r0)/(maxit/2)
-    } else if (ind.t>=a & ind.t<b) {
-      r <- 1
-    } else r <- .1
+    if (the.grid$topo=="square")
+      r0 <- 1+(2/3)*sqrt(sum(the.grid$dim^2))
+    r <- r0*(1/r0)^((ind.t-1)/(maxit-1))-1 # power decrease 
   }
   r
 }
 
-selectNei <- function(the.neuron, the.grid, radius) {
-  if (the.grid$dist.type=="letremy") {
-    if (radius==0.5) {
-      the.dist <- as.matrix(dist(the.grid$coord, diag=TRUE, upper=TRUE,
-                                        method="euclidean"))[the.neuron,]
-      the.nei <- which(the.dist<=1)
+selectNei <- function(the.neuron, the.grid, radius, radius.type) {
+  if (radius.type=="letremy") {
+    if (the.grid$dist.type=="letremy") {
+      if (radius==0.5) {
+        the.dist <- as.matrix(dist(the.grid$coord, diag=TRUE, upper=TRUE,
+                                   method="euclidean"))[the.neuron,]
+        the.nei <- which(the.dist<=1)
+      } else {
+        the.dist <- as.matrix(dist(the.grid$coord, diag=TRUE, upper=TRUE,
+                                   method="maximum"))[the.neuron,]
+        the.nei <- which(the.dist<=radius)
+      }
     } else {
       the.dist <- as.matrix(dist(the.grid$coord, diag=TRUE, upper=TRUE,
-                               method="maximum"))[the.neuron,]
+                                 method=the.grid$dist.type))[the.neuron,]
       the.nei <- which(the.dist<=radius)
     }
-  } else {
-    the.dist <- as.matrix(dist(the.grid$coord, diag=TRUE, upper=TRUE,
-                               method=the.grid$dist.type))[the.neuron,]
-    the.nei <- which(the.dist<=radius)
+  } else if (radius.type=="gaussian") {
+    dist.type <- ifelse(the.grid$dist.type=="letremy",
+                        "maximum", the.grid$dist.type)
+    proto.dist <- as.matrix(dist(the.grid$coord, upper=TRUE, 
+                                 diag=TRUE, method= dist.type))
+    the.nei <- exp(-4.605170185988090914009*
+                     proto.dist[the.neuron,]^2/(radius+1)^2)
   }
   the.nei
-}
-
-gaussianNei <- function(the.neuron, the.grid, radius) {
-  dist.type <- ifelse(the.grid$dist.type=="letremy",
-                      "maximum", the.grid$dist.type)
-  proto.dist <- as.matrix(dist(the.grid$coord, upper=TRUE, 
-                               diag=TRUE, method= dist.type))
-  exp(-proto.dist[the.neuron,]^2/(2*radius^2))
 }
 
 # Functions to manipulate objects in the input space
@@ -129,7 +128,8 @@ distRelationalProto <- function(proto1, proto2, x.data) {
 calculateProtoDist <- function(prototypes, the.grid, type, complete=FALSE,
                                x.data=NULL) {
   if (!complete) {
-    all.nei <- sapply(1:prod(the.grid$dim),selectNei,the.grid=the.grid,radius=1)
+    all.nei <- sapply(1:prod(the.grid$dim), selectNei, the.grid=the.grid,
+                      radius=1, radius.type="letremy")
     all.nei <- sapply(1:prod(the.grid$dim), function(neuron) 
       setdiff(all.nei[[neuron]],neuron))
     if (type!="relational") {# euclidean case
@@ -318,7 +318,7 @@ calculateClusterEnergy <- function(cluster, x.data, clustering, prototypes,
       if (sum(clustering%in%the.nei)>0) {
         return(sum((x.data[which(clustering%in%the.nei),]-
                       outer(rep(1,sum(clustering%in%the.nei)),
-                                 prototypes[cluster,]))^2))
+                            prototypes[cluster,]))^2))
       }
     }
   } else if (parameters$type=="relational") {
@@ -346,12 +346,12 @@ calculateEnergy <- function(x.data, clustering, prototypes, parameters, ind.t) {
   } else if (parameters$type=="relational") {
     if (parameters$radius.type=="letremy") {
       radius <- calculateRadius(parameters$the.grid, parameters$radius.type,
-                              ind.t, parameters$maxit)
+                                ind.t, parameters$maxit)
       return(sum(unlist(sapply(1:nrow(prototypes), calculateClusterEnergy,
-                             x.data=x.data, clustering=clustering, 
-                             prototypes=prototypes, parameters=parameters,
-                             radius=radius)))/
-             nrow(x.data)/nrow(prototypes))
+                               x.data=x.data, clustering=clustering, 
+                               prototypes=prototypes, parameters=parameters,
+                               radius=radius)))/
+               nrow(x.data)/nrow(prototypes))
     }
   }
 }
@@ -464,11 +464,8 @@ trainSOM <- function (x.data, ...) {
     # Neighborhood
     radius <- calculateRadius(parameters$the.grid, parameters$radius.type,
                               ind.t, parameters$maxit)
-    if (parameters$radius.type=="letremy") {
-      the.nei <- selectNei(winner, parameters$the.grid, radius)
-    } else if (parameters$radius.type=="gaussian") {
-      the.nei <- gaussianNei(winner, parameters$the.grid, radius)
-    }
+    the.nei <- selectNei(winner, parameters$the.grid, radius, 
+                         radius.type= parameters$radius.type)
     # Learning rate
     epsilon <- 0.3*parameters$eps0/(1+0.2*ind.t/prod(parameters$the.grid$dim))
     # Update

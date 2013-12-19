@@ -1,7 +1,8 @@
 ## These functions handle SOM learning
 initSOM <- function(dimension=c(5,5), topo=c("square"),
-                    dist.type=c("letremy","maximum","euclidean","manhattan",
-                                "canberra","binary","minkowski"),
+                    dist.type=switch(match.arg(radius.type), 
+                                     "letremy"="letremy", 
+                                     "gaussian"="euclidean"),
                     type=c("numeric", "relational", "korresp"), 
                     mode=c("online"), 
                     maxit=500, nb.save=0, verbose=FALSE, proto0=NULL, 
@@ -17,6 +18,9 @@ initSOM <- function(dimension=c(5,5), topo=c("square"),
   type <- match.arg(type)
   scaling <- match.arg(scaling, c("unitvar", "none", "center", "chi2", 
                                   "frobenius", "max", "sd", "cosine"))
+  dist.type <- match.arg(dist.type, c("letremy", "maximum", "euclidean",
+                                      "manhattan", "canberra", "binary",
+                                      "minkowski"))
   init.proto <- match.arg(init.proto, c("random", "obs", "pca"))
   
   # check scaling compatibility
@@ -60,8 +64,7 @@ initSOM <- function(dimension=c(5,5), topo=c("square"),
     }
   }
   
-  params <- list("the.grid"=initGrid(dimension,match.arg(topo),
-                                     match.arg(dist.type)),
+  params <- list("the.grid"=initGrid(dimension, match.arg(topo), dist.type),
                  type=type, mode=match.arg(mode), maxit=maxit,
                  nb.save=nb.save, proto0=proto0,
                  init.proto=init.proto, 

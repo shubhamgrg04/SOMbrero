@@ -28,7 +28,8 @@ topographicError <- function (sommap) {
   }
   res.error <- mean(!sapply(1:nrow(sommap$data), function(x) {
       is.element(ind.winner2[x], selectNei(sommap$clustering[x],
-                                           sommap$parameters$the.grid, 1))
+                                           sommap$parameters$the.grid, 1,
+                                           radius.type= "letremy"))
   }))
   return(res.error)
 }

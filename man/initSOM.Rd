@@ -12,8 +12,9 @@ contains the parameters needed to run the SOM algorithm.
 }
 \usage{
 initSOM(dimension=c(5,5), topo=c("square"),
-        dist.type=c("letremy", "maximum", "euclidean", "manhattan",
-                    "canberra", "binary", "minkowski"),
+        dist.type=switch(match.arg(radius.type), 
+                         "letremy"="letremy", 
+                         "gaussian"="euclidean"),
         type=c("numeric", "relational", "korresp"), mode=c("online"), 
         maxit=500, nb.save=0, verbose=FALSE, proto0=NULL, 
         init.proto=switch(type, 
@@ -35,9 +36,13 @@ initSOM(dimension=c(5,5), topo=c("square"),
   \code{trainSOM}.}
   \item{topo}{The topology to be used to build the grid of the \code{myGrid} 
   class object. Default value is \code{square}.}
-  \item{dist.type}{The neighborhood relationship on the grid. Default value is
-  \code{"letremy"} which is the original implementation by Patrick Letremy.
-  The other possible values are the values passed to \code{method} in
+  \item{dist.type}{The neighborhood relationship on the grid. When 
+  \code{radius.type} is \code{letremy}, default value is \code{letremy} 
+  which is the original implementation by Patrick Letremy.
+  When \code{radius.type} is \code{gaussian}, default value is 
+  \code{euclidean}.
+  The other possible values (\code{maximum}, \code{manhattan}, \code{canberra},
+  \code{binary}, \code{minkowski}) are passed to \code{method} in
   function \code{\link[stats]{dist}}.}
   \item{type}{The SOM algorithm type. Possible values are: \code{numeric} 
   (default value), \code{korresp} and \code{relational}.}
