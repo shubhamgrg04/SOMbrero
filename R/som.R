@@ -228,7 +228,7 @@ initProto <- function(parameters, norm.x.data, x.data) {
                                 replace=TRUE))] <- 1
       }
     } else if (parameters$init.proto=="pca") {
-      # the more detailed grid axis is assigned to the first component
+      # the most detailed grid axis is assigned to the first component
       if (parameters$the.grid$dim[1]>=parameters$the.grid$dim[2]) {
         x.ev <- 1
         y.ev <- 2
@@ -237,19 +237,19 @@ initProto <- function(parameters, norm.x.data, x.data) {
         y.ev <- 1
       }
       if (parameters$type=="numeric") {
-        data.pca <- prcomp(norm.x.data)
-        x <- seq(from=quantile(data.pca$x[,x.ev], .025), 
-                 to=quantile(data.pca$x[,x.ev], .975),
+        # perform PCA
+        data.pca <- princomp(norm.x.data)
+        x <- seq(from=quantile(data.pca$scores[,x.ev], .025), 
+                 to=quantile(data.pca$scores[,x.ev], .975),
                  length.out=parameters$the.grid$dim[1])
-        y <- seq(from=quantile(data.pca$x[,y.ev], .025), 
-                 to=quantile(data.pca$x[,y.ev], .975),
+        y <- seq(from=quantile(data.pca$scores[,y.ev], .025), 
+                 to=quantile(data.pca$scores[,y.ev], .975),
                  length.out=parameters$the.grid$dim[2])
         base <- as.matrix(expand.grid(x=x, y=y))
+        # search for the closest observation
         closest.obs <- apply(base, 1, function(point) 
-          which.min(colSums((t(data.pca$x[,1:2])-point)^2)))
-        base <- data.pca$x[closest.obs,1:2]
-        mapped <- tcrossprod(base, data.pca$rotation[,c(x.ev, y.ev)])
-        prototypes <- sweep(mapped,2,data.pca$center,"+")
+          which.min(colSums((t(data.pca$scores[,c(x.ev,y.ev)])-point)^2)))
+        prototypes <- norm.x.data[closest.obs,]
       } else if (parameters$type=="relational") {
         data.mds <- cmdscale(norm.x.data)
         x <- seq(from=quantile(data.mds[,x.ev], .025), 

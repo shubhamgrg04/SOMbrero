@@ -9,7 +9,7 @@ cosine scaling, division by standard deviation of the distances,
 division by max distance
   Added ANOVA to summary for relational SOM
   Added ANOVA to summary of somSC for numeric and relational SOM
-  Added pca initialization for numeric and korresp cases
+  Added PCA initialization for numeric and relational cases
   Added Kaski-Lagus error to quality function (numeric and relational cases)
   Added Gaussian neighborhood type
 

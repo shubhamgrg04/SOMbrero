@@ -59,12 +59,11 @@ initSOM(dimension=c(5,5), topo=c("square"),
   may be \code{random} (randomization), \code{obs} (each prototype is assigned
   a random observation) or \code{pca}. In \code{pca} the prototypes are 
   initialized to the observations closest to a grid along the two first 
-  principal components of the data (\code{numeric} case) or a two-dimensional
-  multidimensional scaling (\code{relational} case, equivalent to a 
-  \code{relational} PCA). Default value is 
-  \code{random} for the \code{numeric} and \code{korresp} types, and 
-  \code{obs} for the \code{relational} type. \code{pca} is not available for
-  \code{korresp} SOM.}
+  principal components of the data (\code{numeric} case) or along a
+  two-dimensional multidimensional scaling (\code{relational} case, equivalent
+  to a \code{relational} PCA). Default value is \code{random} for the
+  \code{numeric} and \code{korresp} types, and \code{obs} for the
+  \code{relational} type. \code{pca} is not available for \code{korresp} SOM.}
   \item{scaling}{The type of data pre-processing. For \code{numeric} SOM, 
   possibilities are \code{unitvar} (data are centered and scaled; this 
   is the default value for a \code{numeric} SOM), \code{none} (no 
