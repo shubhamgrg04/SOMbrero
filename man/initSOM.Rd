@@ -32,7 +32,7 @@ initSOM(dimension=c(5,5), topo=c("square"),
 \arguments{
   \item{dimension}{Vector of two integer points corresponding to the x 
   dimension and the y dimension of the \code{myGrid} class object. Default 
-  values are: \code{(5,5)} ; other data-driven defaults are set by function 
+  values are: \code{(5,5)}; other data-driven defaults are set by function 
   \code{trainSOM}.}
   \item{topo}{The topology to be used to build the grid of the \code{myGrid} 
   class object. Default value is \code{square}.}
@@ -73,7 +73,9 @@ initSOM(dimension=c(5,5), topo=c("square"),
   default value for \code{relational} SOM), \code{frobenius} (dissimilarity 
   matrix is divided by its frobenius norm), \code{max} (dissimilarity matrix
   is divided by its maximum), \code{sd} (dissimilarities are divided 
-  by their standard deviation), and \code{cosine}.}
+  by their standard deviation) and \code{cosine}. In the case where only one
+  dissimilarity is used, \code{frobenius}, \code{max} and \code{sd} are 
+  equivalent to \code{none}.}
   \item{radius.type}{The neighbourhood type. Default value is \code{"letremy"},
   which corresponds to the original implementation by Patrick Letremy.}
   \item{eps0}{The scaling value for the stochastic gradient descent step
@@ -91,6 +93,7 @@ a list of the parameters passed to the \code{initSOM} function, plus the default
 parameters for the ones not specified by the user.
 }
 \author{Laura Bendhaiba \email{laurabendhaiba@gmail.com}\cr
+Julien Boelaert \email{julien.boelaert@gmail.com}\cr
 Madalina Olteanu \email{madalina.olteanu@univ-paris1.fr}\cr
 Nathalie Villa-Vialaneix \email{nathalie.villa@univ-paris1.fr}
 }

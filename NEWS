@@ -1,17 +1,25 @@
+SOMbrero 0.4-2
+New features:
+  Added preprocessing for dissimilarity: division by the norm (Frobenius), 
+cosine scaling, division by standard deviation of the distances, division by max
+distance. Added various tests to check consistency
+  Added ANOVA to summary for relational SOM
+  Added ANOVA to summary of somSC for numeric and relational SOM
+  Added PCA initialization for numeric and relational cases
+  Added Kaski-Lagus error to quality function (numeric and relational cases)
+  Added Gaussian neighborhood type
+
+Misc:
+  Added test: equivalence of numeric SOM and relational SOM on squared 
+euclidian distance
+
+********************************************************************************
 SOMbrero 0.4-1
 New features:
   Added a parameter that tunes the gradient descent step
   Added a web user interface, implemented with shiny
   Added the topographic error to somRes.summary
   Improved the summary of somSC (table of neuron numbers and superclass numbers)
-  Added preprocessing for dissimilarity : division by the norm (Frobenius), 
-cosine scaling, division by standard deviation of the distances, 
-division by max distance
-  Added ANOVA to summary for relational SOM
-  Added ANOVA to summary of somSC for numeric and relational SOM
-  Added PCA initialization for numeric and relational cases
-  Added Kaski-Lagus error to quality function (numeric and relational cases)
-  Added Gaussian neighborhood type
 
 Code improvements:
   Changed default value of init.proto to "obs" for "relational" algorithm
@@ -19,10 +27,6 @@ Code improvements:
 Fixed bugs:
   Changed scree plot title and ylabel to "proportion of unexplained variables"
   Fixed computation of energy for relational SOM
-
-Misc:
-  Added test : equivalence of numeric SOM and relational SOM on squared 
-euclidian distance
 
 ********************************************************************************
 SOMbrero 0.4

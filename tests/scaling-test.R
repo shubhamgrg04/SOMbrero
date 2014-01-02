@@ -20,30 +20,29 @@ set.seed(321)
 nsom2 <- trainSOM(iris.scale, type= "numeric", maxit= 10, scaling= "none")
 stopifnot(identical(nsom1$clustering, nsom2$clustering))
 
-##
+## 'sd' must be identical to 'none' when only one dissimilarity is used
 set.seed(321)
 rsom1 <- trainSOM(dissim.lesmis, type= "relational", maxit= 10, 
                   scaling= "sd")
-lesmis.scale <- dissim.lesmis/sd(dissim.lesmis[upper.tri(dissim.lesmis,
-                                                         diag= FALSE)])
+lesmis.scale <- dissim.lesmis
 set.seed(321)
 rsom2 <- trainSOM(lesmis.scale, type= "relational", maxit= 10, scaling= "none")
 stopifnot(identical(rsom1$clustering, rsom2$clustering))
 
-##
+## 'max' must be identical to 'none' when only one dissimilarity is used
 set.seed(321)
 rsom1 <- trainSOM(dissim.lesmis, type= "relational", maxit= 10, 
                   scaling= "max")
-lesmis.scale <- dissim.lesmis/max(abs(dissim.lesmis))
+lesmis.scale <- dissim.lesmis
 set.seed(321)
 rsom2 <- trainSOM(lesmis.scale, type= "relational", maxit= 10, scaling= "none")
 stopifnot(identical(rsom1$clustering, rsom2$clustering))
 
-##
+## 'frobenius' must be identical to 'none' when only one dissimilarity is used
 set.seed(321)
 rsom1 <- trainSOM(dissim.lesmis, type= "relational", maxit= 10, 
                   scaling= "frobenius")
-lesmis.scale <- dissim.lesmis/sqrt(sum(dissim.lesmis^2))
+lesmis.scale <- dissim.lesmis
 set.seed(321)
 rsom2 <- trainSOM(lesmis.scale, type= "relational", maxit= 10, scaling= "none")
 stopifnot(identical(rsom1$clustering, rsom2$clustering))
