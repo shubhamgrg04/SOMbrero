@@ -1,9 +1,24 @@
-* check it (NV²)
-** kernel normalization
-** ANOVA
+* Before new version
+** check SOMbrero.Rd
+** check CITATION
+** check NEWS
+** check DESCRIPTION
+** check shiny and push
+** check vignettes and foodweb image
+** update web page (svn)
+** remove unecessary files before compilation (check .Rbuildignore)
+
+*******************************************************************************
+* check it (NV2)
+** [done: closed 2014/02/23] kernel normalization
+** ANOVA (summary and summary SC)
 ** energy
 ** erreur KL
 ** Gaussian neighborhood
+** check vignettes with new implementations (medieval); default values for init?
+** shiny: add new functionalities => shiny 0.2
+*** pca initialization
+*** kernel normalization
 
 * other features (easy)
 ** add a function graph2SOM that projects a graph on the grid
@@ -13,6 +28,8 @@
 ** change palette defaults of pie plots (currently limited to 
    the 8 standard colors)
 ** add control for scaling of names plots in WUI
+** add an option to handle auto-similarity in cosine preprocess
+** shiny: add INRA logo
 
 * other features (hard)
 ** grid.topology: hexagonal

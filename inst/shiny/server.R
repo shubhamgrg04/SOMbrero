@@ -1,4 +1,4 @@
-library(SOMbrero) # Version 0.4
+library(SOMbrero) # Version 0.5
 
 ###############################################################################
 ## Global variables
@@ -162,7 +162,7 @@ shinyServer(function(input, output, session) {
                                 "numeric"= list("unitvar", "none", "center"),
                                 "korresp"= list("chi2"),
                                 "relational"= list("none", "frobenius", "max",
-                                                   "sd")),
+                                                   "sd", "cosine")),
                 selected= switch(input$somtype, "numeric"= "unitvar",
                                  "korresp"= "chi2", "relational"= "none"))
   })
@@ -170,11 +170,12 @@ shinyServer(function(input, output, session) {
   # update the initialization method when input$somtype is changed
   output$initproto <- renderUI({
     selectInput("initproto", label= "Prototypes initialization method:", 
-                choices= c("random","obs"), 
-                selected= switch(input$somtype, 
-                                 "numeric"= "random",
-                                 "korresp"= "random",
-                                 "relational"= "obs"))
+                choices= switch(input$somtype,
+                                "numeric"=list("random", "obs", "pca"),
+                                "korresp"=list("random", "obs"),
+                                "relational"=list("random", "obs", "pca")), 
+                selected= switch(input$somtype, "numeric"= "random",
+                                 "korresp"= "random", "relational"= "obs"))
   })
 
   # update default distance type when radius type is changed
@@ -185,8 +186,8 @@ shinyServer(function(input, output, session) {
                   "canberra"="canberra", "binary"="binary",
                   "minkowski"="minkowski"),
                 selected= switch(input$radiustype, 
-                                 "letremy"= "letremy",
-                                 "gaussian"= "euclidean"))
+                                 "letremy"= "letremy"))#,
+#                                  "gaussian"= "euclidean"))
   })
 
   # Train the SOM when the button is hit

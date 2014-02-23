@@ -25,11 +25,11 @@ trainSOM(x.data, \ldots)
   calculated according to the SOM type if the user does not set them:
   \itemize{
     \item \code{maxit} is equal to (number of rows+number of columns)*5 if the 
-    SOM type is \code{korresp} ; it is equal to number of rows*5 in all other 
-    SOM types
+    SOM type is \code{korresp}; it is equal to number of rows*5 in all other SOM
+    types
     \item \code{dimension}: for a \code{korresp} SOM, is equal to maximum 
     between 5 and the minimum of 10 and the ceiling value of the square root 
-    of (number of rows+number of columns)/10 ; in all other SOM types, the  
+    of (number of rows+number of columns)/10; in all other SOM types, the  
     square root only considers the number of rows (divided by 10).
   }}
   \item{x, object}{an object of class \code{somRes}}
@@ -69,22 +69,21 @@ Kohonen maps: a Factorial Correspondence Analysis. In: \emph{Proceedings of
 IWANN'93, J. Cabestany, J. Mary, A. Prieto (Eds.), Lecture Notes in Computer
 Science}, Springer-Verlag, 305--311.
 
-Olteanu, M., Villa-Vialaneix, N., Cottrell, M. (2012) On-line
-relational SOM for dissimilarity data. In: \emph{Advances in Self-Organizing
-Maps (Proceedings of WSOM 2012, Santiago, Chili, 12-14 decembre 2012), Estevez
-P., Principe J., Zegers P., Barreto G. (eds.), 'Advances in Intelligent Systems
-and Computing' series}, Berlin/Heidelberg: Springer Verlag, \bold{198}, 13--22.
+Olteanu, M., Villa-Vialaneix, N. (2014) On-line relational and multiple
+relational SOM. \emph{Neurocomputing}. Forthcoming.
 }
 \author{Laura Bendhaiba \email{laurabendhaiba@gmail.com}\cr
 Madalina Olteanu \email{madalina.olteanu@univ-paris1.fr}\cr
-Nathalie Villa-Vialaneix \email{nathalie.villa@univ-paris1.fr}
+Nathalie Villa-Vialaneix \email{nathalie.villa@toulouse.inra.fr}
 }
 \note{Warning! Recording intermediate backups with the argument \code{nb.save}
 can strongly increase the computational time since calculating the entire
 clustering and the energy is time consumming. Use this option with care and only
 when it is strictly necessary.}
 
-\seealso{See \link{plot.somRes} to plot the outputs of the algorithm.}
+\seealso{See \code{\link{initSOM}} for a description of the paramaters to pass
+to the trainSOM function to change its behavior and \code{\link{plot.somRes}}
+to plot the outputs of the algorithm.}
 
 \examples{
 # Run trainSOM algorithm on the iris data with 500 iterations

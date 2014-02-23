@@ -71,11 +71,17 @@ initSOM(dimension=c(5,5), topo=c("square"),
   For \code{korresp} SOM, the only available value is \code{chi2}.
   For \code{relational} SOM, possibilities are \code{none} (no pre-processing, 
   default value for \code{relational} SOM), \code{frobenius} (dissimilarity 
-  matrix is divided by its frobenius norm), \code{max} (dissimilarity matrix
+  matrix is divided by its Frobenius norm), \code{max} (dissimilarity matrix
   is divided by its maximum), \code{sd} (dissimilarities are divided 
-  by their standard deviation) and \code{cosine}. In the case where only one
-  dissimilarity is used, \code{frobenius}, \code{max} and \code{sd} are 
-  equivalent to \code{none}.}
+  by their standard deviation) and \code{cosine}. This last first turns the
+  dissimilarity into a similarity using (Lee and Verleysen, 2007) suggestion. 
+  Then a cosine normalization (Ben-Hur and Weston, 2010) is applied to the
+  kernel, that is finally turned back into its induced distance. For further
+  details on this processing, have a look at the corresponding documentation in
+  the directory "addDoc" of the package's installation directory. In the case
+  where only one dissimilarity is used, \code{frobenius}, \code{max} and
+  \code{sd} are  equivalent to \code{none}. Multiple dissimilarity handling is
+  scheduled in a future version of SOMbrero.}
   \item{radius.type}{The neighbourhood type. Default value is \code{"letremy"},
   which corresponds to the original implementation by Patrick Letremy.}
   \item{eps0}{The scaling value for the stochastic gradient descent step
@@ -95,10 +101,16 @@ parameters for the ones not specified by the user.
 \author{Laura Bendhaiba \email{laurabendhaiba@gmail.com}\cr
 Julien Boelaert \email{julien.boelaert@gmail.com}\cr
 Madalina Olteanu \email{madalina.olteanu@univ-paris1.fr}\cr
-Nathalie Villa-Vialaneix \email{nathalie.villa@univ-paris1.fr}
+Nathalie Villa-Vialaneix \email{nathalie.villa@toulouse.inra.fr}
 }
 \references{
-Letremy, P. (2005) Programmes bases sur l'algorithme de Kohonen et dedies a
+Ben-Hur A., Weston J. (2010) A user's guide to support vector machine. In:
+\emph{Data Mining Techniques for the Life Sciences}, Springer-Verlag, 223-239.
+
+Lee J., Verleysen M. (2007) \emph{Nonlinear Dimensionality Reduction}.
+Information Science and Statistics series, Springer.
+
+Letremy P. (2005) Programmes bases sur l'algorithme de Kohonen et dedies a
 l'analyse des donnees. SAS/IML programs for 'korresp'.
 \url{http://samos.univ-paris1.fr/Programmes-bases-sur-l-algorithme}.
 }

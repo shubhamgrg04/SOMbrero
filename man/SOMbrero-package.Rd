@@ -37,9 +37,9 @@ Julien Boelaert \email{julien.boelaert@gmail.com}
 
 Madalina Olteanu \email{madalina.olteanu@univ-paris1.fr}
 
-Nathalie Villa-Vialaneix \email{nathalie.villa@univ-paris1.fr}
+Nathalie Villa-Vialaneix \email{nathalie.villa@toulouse.inra.fr}
 
-Maintainer: Nathalie Villa-Vialaneix \email{nathalie.villa@univ-paris1.fr}
+Maintainer: Nathalie Villa-Vialaneix \email{nathalie.villa@toulouse.inra.fr}
 }
 \references{         
 Kohonen T. (2001) \emph{Self-Organizing Maps}. Berlin/Heidelberg:
@@ -54,10 +54,10 @@ Letremy, P. (2005) Programmes bases sur l'algorithme de Kohonen et dedies a
 l'analyse des donnees. SAS/IML programs for 'korresp'.
 \url{http://samos.univ-paris1.fr/Programmes-bases-sur-l-algorithme}.
 
-Olteanu, M., Villa-Vialaneix, N. (2013) On-line relational and multiple
+Olteanu, M., Villa-Vialaneix, N. (2014) On-line relational and multiple
 relational SOM. \emph{Neurocomputing}. Forthcoming.
 }
 \seealso{
 \code{\link{initGrid}}, \code{\link{trainSOM}}, \code{\link{plot.somRes}} and
-\code{\link{sombreroGUI()}}.
+\code{\link{sombreroGUI}}.
 }

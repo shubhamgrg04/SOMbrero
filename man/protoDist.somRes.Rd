@@ -39,7 +39,7 @@ number of neighbors.
 
 \author{Laura Bendhaiba \email{laurabendhaiba@gmail.com}\cr
 Madalina Olteanu \email{madalina.olteanu@univ-paris1.fr}\cr
-Nathalie Villa-Vialaneix \email{nathalie.villa@univ-paris1.fr}
+Nathalie Villa-Vialaneix \email{nathalie.villa@toulouse.inra.fr}
 }
 
 \seealso{\code{\link{trainSOM}}}

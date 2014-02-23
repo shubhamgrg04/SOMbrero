@@ -1,0 +1,10 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+.git
+^.svn
+^.*.pdf$
+^.*.html$
+^.*.md$
+^inst/doc/figure
+^inst/doc/cache
+

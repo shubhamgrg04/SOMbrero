@@ -1,7 +1,7 @@
 # Define UI for dataset viewer application
 shinyUI(pageWithSidebar(
   # Application title
-  headerPanel("SOMbrero Web User Interface (v0.1)"),
+  headerPanel("SOMbrero Web User Interface (v0.2)"),
 
   #### Panel 'About' (right hand side)
   ##############################################################################
@@ -14,7 +14,7 @@ shinyUI(pageWithSidebar(
     p(HTML("<h5>Welcome to SOMbrero, the open-source on-line interface for 
 self-organizing maps (SOM).</h5> This interface trains SOM for numerical data,
 contingency tables and dissimilarity data using the <strong>R</strong> package
-<a href='http://sombrero.r-forge.r-project.org/'>SOMbrero</a> (v0.4). Train a
+<a href='http://sombrero.r-forge.r-project.org/'>SOMbrero</a> (v0.5). Train a
 map on your data and visualize their topology in three simple steps using the
 panels on the right.")),
     
@@ -25,7 +25,7 @@ panels on the right.")),
 license, and was developed by Julien Boelaert, 
 <a href= http://samm.univ-paris1.fr/-Madalina-Olteanu->Madalina Olteanu</a> and
 <a href= http://www.nathalievilla.org/> Nathalie Villa-Vialaneix</a>, using
-<a href="http://www.rstudio.com/shiny/">Shiny</a>. Its source code is freely
+<a href="http://www.rstudio.com/shiny/">shiny</a>. Its source code is freely
 available on github: <br> <span style="font-size:12px;font-family:courrier;
 background-color:#FADDF2;border:1px solid black;"><font color="#870500"><b>
 git clone https://github.com/tuxette/sombrero.git</b></font></code></span>')),
@@ -39,13 +39,9 @@ E.</span> (1993) Analyzing a contingency table with Kohonen maps: a Factorial
 Correspondence Analysis. In: <I>Proceedings of IWANN’93</I>,
 <span style="font-variant: small-caps;">J. Cabestany, J. Mary, A. Prieto</span>
 (Eds.), <I>Lecture Notes in Computer Science, </I>Springer-Verlag, 305–311.</li>
-<li> <span style="font-variant: small-caps;">Olteanu M., Villa-Vialaneix N.,
-Cottrell M.</span> (2012) On-line relational SOM for dissimilarity data. 
-<i>Advances in Self-Organizing Maps (Proceedings of WSOM 2012, Santiago, Chili, 
-12-14 decembre 2012)</i>, <span style="font-variant: small-caps;">Estevez P.,
-Principe J., Zegers P., Barreto G.</span> (Eds.), <I>Advances in Intelligent 
-Systems and Computing series</I>, Berlin/Heidelberg: Springer Verlag, 198,
-13-22</li>'))
+<li> <span style="font-variant: small-caps;">Olteanu M., Villa-Vialaneix N.
+</span> (2014) On-line relational and multiple relational SOM. 
+<i>Neurocomputing</i>. Forthcoming'))
   ),
 
   mainPanel(
@@ -120,8 +116,9 @@ adequate parameter values.')),
                numericInput("maxit", "Max. iterations:", 500),
                uiOutput("disttype"),
                selectInput("radiustype", "Radius type:", 
-                           list("Piecewise linear"="letremy", 
-                                "Gaussian"="gaussian")),
+                           list("Piecewise linear (Letremy's type)"="letremy")),
+#                            list("Piecewise linear"="letremy", 
+#                                 "Gaussian"="gaussian")),
                uiOutput("scaling"),
                numericInput("randseed",
                             HTML("Set a random seed for reproducible results

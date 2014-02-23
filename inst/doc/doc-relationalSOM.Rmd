@@ -95,7 +95,8 @@ ease the use of the graphical functions of ```SOMbrero```.
 
 ```{r lesmisTrain, cache=TRUE}
 set.seed(4031719)
-mis.som <- trainSOM(x.data=dissim.lesmis, type="relational", nb.save=10)
+mis.som <- trainSOM(x.data=dissim.lesmis, type="relational", nb.save=10,
+                    init.proto="random")
 plot(mis.som, what="energy")
 ```
 The dissimilarity matrix ```dissim.lesmis``` is passed to the ```trainSOM``` 
@@ -116,7 +117,7 @@ plot(mis.som)
 The clustering can be displayed using the ```plot``` function
 with ```type=names```.
 ```{r lesmisPseudoNamesPlot, fig.height=12, fig.width=12, warning=FALSE}
-plot(mis.som, what="obs", type="names")
+plot(mis.som, what="obs", type="names", scale=c(2,0.5))
 ```
 or by sur-imposing the original igraph object on the map:
 ```{r lesmisProjGraph}

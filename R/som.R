@@ -5,34 +5,57 @@
 ################################################################################
 
 # Cosine preprocessing (for "relational" case)
-cosinePreprocess <- function(diss.matrix, x.new= NULL) {
+cosinePreprocess <- function(diss.matrix, x.new= NULL, auto.sim=NULL,
+                             tolerance=10^(-10)) {
+  # tolerance is used to solve numeric instabilities
   # similarity matrix by double centering
   sim.matrix <- -.5* (diag(1, nrow(diss.matrix))- 1/nrow(diss.matrix)) %*%
     diss.matrix %*% (diag(1, nrow(diss.matrix))-1/nrow(diss.matrix))
+  sim.matrix <- round(sim.matrix, -log10(tolerance))
   
   if (is.null(x.new)) {
     # normalize the original dissimilarity matrix
-    scaled.ker <- sweep(sweep(sim.matrix,1,sqrt(diag(sim.matrix)),"/"),
-                        2,sqrt(diag(sim.matrix)),"/")
+    scaled.ker <- sweep(sweep(sim.matrix,2,sqrt(diag(sim.matrix)),"/"),
+                        1,sqrt(diag(sim.matrix)),"/")
+    # came back to dissimilarity
+    # if cosine preprocess is useless it is the original dissimilarity
     scaled.diss <- 2-2*scaled.ker
     rownames(scaled.diss) <- rownames(diss.matrix)
     colnames(scaled.diss) <- colnames(diss.matrix)
-    scaled.diss <- .5*(scaled.diss+t(scaled.diss)) # force symmetry
-    round(scaled.diss,8) # because of numeric instability
+    scaled.diss <- round(scaled.diss, -log10(tolerance))
   } else {
-    # normalize additional dissimilarity lines
-    if (is.null(dim(x.new))) x.new <- matrix(x.new, nrow=1)
-    sim.x <- t(apply(x.new, 1, function(x) -.5*(x-mean(x)
-                                                -colMeans(diss.matrix)
-                                                +mean(diss.matrix))))
-    sim.x0 <- apply(x.new, 1, function(x) mean(x)-mean(diss.matrix)/2)
-    scaled.ker.x <- t(sapply(1:nrow(x.new),function(ind) sim.x[ind,]/
-                               sqrt(sim.x0[ind]*diag(sim.matrix))))
-    scaled.diss.x <- 2-2*scaled.ker.x
-    colnames(scaled.diss.x) <- colnames(diss.matrix)
-    rownames(scaled.diss.x) <- rownames(x.new)
-    round(scaled.diss.x,8) # because of numeric instability
+    # normalize additional dissimilarity lines like the similarity matrix
+    sim.x <- t(apply(x.new, 1, function(x) 
+      -.5*(x - mean(x) - colMeans(diss.matrix) + mean(diss.matrix))))
+    sim.x <- round(sim.x, -log10(tolerance))
+    if (is.null(auto.sim)) {
+      # when auto-similarity is unknown for new observation, use the mean of the
+      # original similarity
+      if (nrow(x.new)>1) {
+        scaled.ker <- sweep(sweep(sim.x, 2, sqrt(diag(sim.matrix)), "/"), 1,
+                              rep(mean(sqrt(diag(sim.matrix))),nrow(sim.x)))
+      } else {
+        scaled.ker <- sweep(sim.x, 2, sqrt(diag(sim.matrix)), "/")/
+          mean(sqrt(diag(sim.matrix)))
+      }
+    } else {
+      if (nrow(x.new)!=length(auto.sim))
+        stop("auto.sim must have length equal to the number of rows of x.new")
+      # use auto-similarity
+      if (nrow(x.new)>1) {
+        scaled.ker <- sweep(sweep(sim.x, 2, sqrt(diag(sim.matrix)), "/"), 1,
+                            sqrt(auto.sim), "/")
+      } else {
+        scaled.ker <- sweep(sim.x, 2, sqrt(diag(sim.matrix)), "/")/
+          sqrt(auto.sim)
+      }
+    }
+    scaled.diss <- 2-2*scaled.ker
+    colnames(scaled.diss) <- colnames(diss.matrix)
+    rownames(scaled.diss) <- rownames(x.new)
+    scaled.diss <- round(scaled.diss, -log10(tolerance))
   }
+  return(scaled.diss)
 }
 
 # Preprocess data or prototypes
@@ -57,12 +80,12 @@ preprocessProto <- function(prototypes, scaling, x.data) {
          "center"=scale(prototypes, 
                         center=apply(x.data,2,mean),
                         scale=FALSE),
-         "none"=as.matrix(prototypes),
-         "chi2"=as.matrix(prototypes),
-         "frobenius"=as.matrix(prototypes),
-         "max"=as.matrix(prototypes), 
-         "sd"=as.matrix(prototypes),
-         "cosine"=as.matrix(prototypes))
+         "none"=prototypes,
+         "chi2"=prototypes,
+         "frobenius"=prototypes,
+         "max"=prototypes, 
+         "sd"=prototypes,
+         "cosine"=prototypes)
 }
 
 calculateRadius <- function(the.grid, radius.type, ind.t, maxit) {
@@ -485,7 +508,7 @@ trainSOM <- function (x.data, ...) {
         
         ind.s <- match(ind.t,backup$steps)
         backup$prototypes[[ind.s]] <- out.proto
-        backup$clustering[,ind.s] <- predict.somRes(res, x.data)
+        backup$clustering[,ind.s] <- predict.somRes(res)
         backup$energy[ind.s] <- calculateEnergy(norm.x.data,
                                                 backup$clustering[,ind.s],
                                                 prototypes, parameters, ind.t)
@@ -516,7 +539,7 @@ trainSOM <- function (x.data, ...) {
       res <- list("parameters"=parameters, "prototypes"=out.proto,
                   "data"=x.data)
       class(res) <- "somRes"
-      clustering <- predict.somRes(res, x.data)
+      clustering <- predict.somRes(res)
       if (parameters$type=="korresp") {
         names(clustering) <- c(colnames(x.data), rownames(x.data))
       } else names(clustering) <- rownames(x.data)
@@ -618,41 +641,13 @@ summary.somRes <- function(object, ...) {
   }
 }
 
-predict.somRes <- function(object, x.new, ...) {
-  if (is.null(dim(x.new))) x.new <- matrix(x.new,nrow=1,
-                                           dimnames=list(1,
-                                                         colnames(object$data)))
-  if ((object$parameters$type %in% c("numeric", "relational")) &&
-        (ncol(object$data)!=ncol(x.new)))
-    stop("Wrong dimensions for 'x.new': number of columns must correspond ",
-         "to the training dataset", call.=TRUE)
-  
-  if(object$parameters$type!="korresp") {
-    norm.x.new <- switch(object$parameters$scaling,
-                         "unitvar"=scale(x.new,
-                                         center=apply(object$data,2,mean),
-                                         scale=apply(object$data,2,sd)),
-                         "center"=scale(x.new,
-                                        center=apply(object$data,2,mean),
-                                        scale=FALSE),
-                         "none"=as.matrix(x.new),
-                         "frobenius"=as.matrix(x.new)/sqrt(sum(object$data^2)),
-                         "max"=as.matrix(x.new)/max(abs(object$data)), 
-                         "sd"=as.matrix(x.new)/ 
-                           sd(object$data[upper.tri(object$data, diag=FALSE)]),
-                         "cosine"=cosinePreprocess(object$data, x.new))
-    if (object$parameters$type=="relational") {
-      norm.x.data <- preprocessData(object$data, object$parameters$scaling)
-    } else norm.x.data <- NULL
-    norm.proto <- preprocessProto(object$prototypes, object$parameters$scaling,
-                                  object$data)
-    winners <- apply(norm.x.new, 1, oneObsAffectation,
-                     prototypes=norm.proto, type=object$parameters$type,
-                     x.data=norm.x.data)
-  } else {
-    if (!identical(as.matrix(x.new), object$data))
+predict.somRes <- function(object, x.new=NULL, ..., auto.sim=NULL,
+                           tolerance=10^(-10)) {
+  ## korresp
+  if(object$parameters$type=="korresp") {
+    if (!is.null(x.new)) 
       warning("For 'korresp' SOM, predict.somRes function can only be called on
-              the original data set\n'object' replaced", 
+              the original data set\n'object'. x.new not used!", 
               call.=TRUE)
     norm.x.data <- korrespPreprocess(object$data)
     winners.rows <- apply(norm.x.data[1:nrow(object$data),1:ncol(object$data)],
@@ -666,8 +661,70 @@ predict.somRes <- function(object, x.new, ...) {
                                                          ncol(norm.x.data)],
                           type=object$parameters$type)
     winners <- c(winners.cols,winners.rows)
+  } else if (object$parameters$type=="numeric") { ## numeric
+    if (is.null(x.new)) {
+      x.new <- object$data
+    } else {
+      if (is.null(dim(x.new)))
+        x.new <- matrix(x.new, nrow=1, dimnames=list(1,colnames(object$data)))
+      if (!is.matrix(x.new)) x.new <- as.matrix(x.new)
+      # check data dimension
+      if (ncol(x.new)!=ncol(object$data))
+        stop("Number of columns of x.new does not correspond to number of 
+             columns of the original data")
+    }
+    norm.x.new <- switch(object$parameters$scaling,
+                         "unitvar"=scale(x.new,
+                                         center=apply(object$data,2,mean),
+                                         scale=apply(object$data,2,sd)),
+                         "center"=scale(x.new,
+                                        center=apply(object$data,2,mean),
+                                        scale=FALSE),
+                         "none"=x.new)
+    norm.proto <- preprocessProto(object$prototypes, object$parameters$scaling,
+                                  object$data)
+    winners <- apply(norm.x.new, 1, oneObsAffectation, prototypes=norm.proto,
+                     type=object$parameters$type)
+  } else if (object$parameters$type=="relational") { ## relational
+    if (is.null(x.new)) {
+      x.new <- object$data
+      if (!is.null(auto.sim)) 
+        warning("auto.sim not NULL but ignored in this case", call.=TRUE)
+      
+      if (object$parameters$scaling=="cosine") {
+        # calculating auto-similarity for these data
+        sim.matrix <- -.5* (diag(1, nrow(object$data))- 1/nrow(object$data)) %*%
+          object$data %*% (diag(1, nrow(object$data))-1/nrow(object$data))
+        sim.matrix <- diag(round(sim.matrix, -log10(tolerance)))
+      } else sim.matrix <- NULL
+    } else {
+      if (is.null(dim(x.new)))
+        x.new <- matrix(x.new, nrow=1, dimnames=list(1,colnames(object$data)))
+      if (!is.matrix(x.new)) x.new <- as.matrix(x.new)
+      # check data dimension
+      if (ncol(x.new)!=ncol(object$data))
+        stop("Number of columns of x.new does not correspond to number of 
+             columns of the original data")
+      if (object$parameters$scaling!="cosine"&&!is.null(auto.sim)) 
+        warning("auto.sim not NULL but ignored in this case", call.=TRUE)
+      sim.matrix <- auto.sim
+    }
+    
+    norm.x.new <- switch(object$parameters$scaling,
+                         "none"=x.new,
+                         "frobenius"=x.new/sqrt(sum(object$data^2)),
+                         "max"=x.new/max(abs(object$data)), 
+                         "sd"=x.new/
+                           sd(object$data[upper.tri(object$data, diag=FALSE)]),
+                         "cosine"=cosinePreprocess(object$data, x.new,
+                                                   sim.matrix))
+    norm.x.data <- preprocessData(object$data, object$parameters$scaling)
+    norm.proto <- preprocessProto(object$prototypes, object$parameters$scaling,
+                                  object$data)
+    winners <- apply(norm.x.new, 1, oneObsAffectation, prototypes=norm.proto,
+                     type=object$parameters$type, x.data=norm.x.data)
   }
-  winners
+  return(winners)
 }
   
 protoDist.somRes <- function(object, mode=c("complete","neighbors"), ...) {

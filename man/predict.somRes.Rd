@@ -8,17 +8,27 @@ Predict the classification of a new observation
 \description{Predict the neuron where a new observation is classified}
 
 \usage{
-\method{predict}{somRes}(object, x.new, ...)
+\method{predict}{somRes}(object, x.new=NULL, ..., auto.sim=NULL,
+                         tolerance=10^(-10))
 }
 
 \arguments{
 \item{object}{a \code{somRes} object}
-\item{x.new}{the new observation}
+\item{x.new}{a new observation. Default values is NULL which corresponds to
+performing prediction on the training dataset}
 \item{...}{not used}
+\item{auto.sim}{(optional) only used with \option{type="relational"} and
+\option{scaling="cosine"}, it corresponds to the auto-similarity of the new
+data (if known). For further details on this option, have a look at the
+'cosine' documentation in the directory "addDoc" of the package's installation
+directory.}
+\item{tolerance}{numeric tolerance (to avoid numeric instability during 'cosine'
+pre-processing). Default value is \option{10^(-10)}}
 }
 
-\details{The length of the new observation must match the number of colums of 
-the data set given to the SOM algorithm (see \code{\link{trainSOM}}).}
+\details{The number of columns of the new observations (or its lenght if only 
+one observation is provided) must match the number of colums of the data set
+given to the SOM algorithm (see \code{\link{trainSOM}}).}
 
 \value{\code{predict.somRes} returns the number of the neuron to which the new 
 observation is assigned (i.e., neuron with the closest prototype).
@@ -28,7 +38,7 @@ contingency table passed to the algorithm.}
 
 \author{Laura Bendhaiba \email{laurabendhaiba@gmail.com}\cr
 Madalina Olteanu \email{madalina.olteanu@univ-paris1.fr}\cr
-Nathalie Villa-Vialaneix \email{nathalie.villa@univ-paris1.fr}
+Nathalie Villa-Vialaneix \email{nathalie.villa@toulouse.inra.fr}
 }
 
 \seealso{\code{\link{trainSOM}}}
