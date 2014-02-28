@@ -23,6 +23,7 @@
 * other features (easy)
 ** add a function graph2SOM that projects a graph on the grid
    (use projectGraph), create a class and a plot method for it
+** make trainSOM(graph ???)
 ** add weights to observations
 ** implement weighted graphs projection
 ** change palette defaults of pie plots (currently limited to 

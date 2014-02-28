@@ -47,9 +47,7 @@ set.seed(321)
 rsom2 <- trainSOM(lesmis.scale, type= "relational", maxit= 10, scaling= "none")
 stopifnot(identical(rsom1$clustering, rsom2$clustering))
 
-## warning: processing or not processing relational data with 'cosine' should
-# not give the same results because the underlying Euclidean space is changed
-# when doing so
+## 
 set.seed(321)
 rsom1 <- trainSOM(dissim.lesmis, type= "relational", maxit= 10, 
                   scaling= "cosine", nb.save=10)
@@ -59,10 +57,11 @@ sim.matrix <- round(sim.matrix, 10)
 scaled.ker <- sweep(sweep(sim.matrix,2,sqrt(diag(sim.matrix)),"/"),
                     1,sqrt(diag(sim.matrix)),"/")
 scaled.diss <- 2-2*scaled.ker
-rownames(scaled.diss) <- rownames(dissim.lesmis)
 colnames(scaled.diss) <- colnames(dissim.lesmis)
-lesmis.scale <- round(scaled.diss, 10)
+rownames(scaled.diss) <- rownames(dissim.lesmis)
+lesmis.scale <- round(scaled.diss,10)
 set.seed(321)
-rsom2 <- trainSOM(lesmis.scale, type= "relational", maxit= 10, scaling= "none", nb.save=10)
+rsom2 <- trainSOM(lesmis.scale, type= "relational", maxit= 10, scaling= "none",
+                  nb.save=10)
 stopifnot(identical(rsom1$clustering, rsom2$clustering))
 

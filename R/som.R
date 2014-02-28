@@ -5,8 +5,7 @@
 ################################################################################
 
 # Cosine preprocessing (for "relational" case)
-cosinePreprocess <- function(diss.matrix, x.new= NULL, auto.sim=NULL,
-                             tolerance=10^(-10)) {
+cosinePreprocess <- function(diss.matrix, x.new= NULL, tolerance=10^(-10)) {
   # tolerance is used to solve numeric instabilities
   # similarity matrix by double centering
   sim.matrix <- -.5* (diag(1, nrow(diss.matrix))- 1/nrow(diss.matrix)) %*%
@@ -28,27 +27,14 @@ cosinePreprocess <- function(diss.matrix, x.new= NULL, auto.sim=NULL,
     sim.x <- t(apply(x.new, 1, function(x) 
       -.5*(x - mean(x) - colMeans(diss.matrix) + mean(diss.matrix))))
     sim.x <- round(sim.x, -log10(tolerance))
-    if (is.null(auto.sim)) {
-      # when auto-similarity is unknown for new observation, use the mean of the
-      # original similarity
-      if (nrow(x.new)>1) {
-        scaled.ker <- sweep(sweep(sim.x, 2, sqrt(diag(sim.matrix)), "/"), 1,
-                              rep(mean(sqrt(diag(sim.matrix))),nrow(sim.x)))
-      } else {
-        scaled.ker <- sweep(sim.x, 2, sqrt(diag(sim.matrix)), "/")/
-          mean(sqrt(diag(sim.matrix)))
-      }
+    auto.sim <- round(apply(x.new,1,mean) - mean(diss.matrix)/2,
+                      -log10(tolerance))
+    if (nrow(x.new)>1) {
+      scaled.ker <- sweep(sweep(sim.x, 2, sqrt(diag(sim.matrix)), "/"), 1,
+                          sqrt(auto.sim), "/")
     } else {
-      if (nrow(x.new)!=length(auto.sim))
-        stop("auto.sim must have length equal to the number of rows of x.new")
-      # use auto-similarity
-      if (nrow(x.new)>1) {
-        scaled.ker <- sweep(sweep(sim.x, 2, sqrt(diag(sim.matrix)), "/"), 1,
-                            sqrt(auto.sim), "/")
-      } else {
-        scaled.ker <- sweep(sim.x, 2, sqrt(diag(sim.matrix)), "/")/
-          sqrt(auto.sim)
-      }
+      scaled.ker <- sweep(sim.x, 2, sqrt(diag(sim.matrix)), "/")/
+        sqrt(auto.sim)
     }
     scaled.diss <- 2-2*scaled.ker
     colnames(scaled.diss) <- colnames(diss.matrix)
@@ -641,8 +627,7 @@ summary.somRes <- function(object, ...) {
   }
 }
 
-predict.somRes <- function(object, x.new=NULL, ..., auto.sim=NULL,
-                           tolerance=10^(-10)) {
+predict.somRes <- function(object, x.new=NULL, ..., tolerance=10^(-10)) {
   ## korresp
   if(object$parameters$type=="korresp") {
     if (!is.null(x.new)) 
@@ -688,15 +673,6 @@ predict.somRes <- function(object, x.new=NULL, ..., auto.sim=NULL,
   } else if (object$parameters$type=="relational") { ## relational
     if (is.null(x.new)) {
       x.new <- object$data
-      if (!is.null(auto.sim)) 
-        warning("auto.sim not NULL but ignored in this case", call.=TRUE)
-      
-      if (object$parameters$scaling=="cosine") {
-        # calculating auto-similarity for these data
-        sim.matrix <- -.5* (diag(1, nrow(object$data))- 1/nrow(object$data)) %*%
-          object$data %*% (diag(1, nrow(object$data))-1/nrow(object$data))
-        sim.matrix <- diag(round(sim.matrix, -log10(tolerance)))
-      } else sim.matrix <- NULL
     } else {
       if (is.null(dim(x.new)))
         x.new <- matrix(x.new, nrow=1, dimnames=list(1,colnames(object$data)))
@@ -705,9 +681,6 @@ predict.somRes <- function(object, x.new=NULL, ..., auto.sim=NULL,
       if (ncol(x.new)!=ncol(object$data))
         stop("Number of columns of x.new does not correspond to number of 
              columns of the original data")
-      if (object$parameters$scaling!="cosine"&&!is.null(auto.sim)) 
-        warning("auto.sim not NULL but ignored in this case", call.=TRUE)
-      sim.matrix <- auto.sim
     }
     
     norm.x.new <- switch(object$parameters$scaling,
@@ -716,8 +689,7 @@ predict.somRes <- function(object, x.new=NULL, ..., auto.sim=NULL,
                          "max"=x.new/max(abs(object$data)), 
                          "sd"=x.new/
                            sd(object$data[upper.tri(object$data, diag=FALSE)]),
-                         "cosine"=cosinePreprocess(object$data, x.new,
-                                                   sim.matrix))
+                         "cosine"=cosinePreprocess(object$data, x.new))
     norm.x.data <- preprocessData(object$data, object$parameters$scaling)
     norm.proto <- preprocessProto(object$prototypes, object$parameters$scaling,
                                   object$data)

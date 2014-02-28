@@ -9,8 +9,8 @@ cosine scaling, division by standard deviation of the distances, division by max
 distance. Added various tests to check consistency
 
 Misc:
-  added test: equivalence of numeric SOM and relational SOM on squared 
-euclidian distance
+  added test: equivalence between numeric SOM and relational SOM on squared
+Euclidean distance
 
 ********************************************************************************
 SOMbrero 0.4-1

@@ -30,7 +30,7 @@ In the following, $\Delta$ will denote a $n\times n$ dissimilarity matrix with
 $\delta_{ij}=\delta_{ji}$ and $\delta_{ii}=0$ and $\delta(x_i,x_j)=\delta_{ij}$
 for individuals $x_i$ and $x_j$ living in an abstract space $\mathcal{G}$.
 
-\section{Original cosine pre-process}
+\section{Original cosine pre-processing}
 
 For the original data, the cosine preprocessing is used as follow:
 \begin{enumerate}
@@ -82,32 +82,24 @@ define. The steps described above are propagated to the new data:
 	Note that when using this transformation with one row of the original matrix,
 the same similarity as in the previous section is recovered;
 	\item similarly, the data are applied a cosine process. As
-$\delta(x_{n+1},x_{n+1})$ is usually unknown (because it is not needed to
-perform the data), $\sqrt{s_{n+1,n+1}}$ (which is also unknown) is estimated by
-the mean $\frac{1}{n}\sum_{i=1}^n \sqrt{s_{ii}}$ and the cosine preprocess thus
-gives
+$\delta(x_{n+1},x_{n+1})=0$ and thus, following the previous case, the
+auto-similarity of $x_{n+1}$ can be estimated by:
 	\[
-		\tilde{s}_{n+1,i} = \frac{s_{n+1,i}}{\sqrt{s_{ii}}\frac{1}{n}\sum_{j=1}^n
-\sqrt{s_{jj}}}.
+		s_{n+1,n+1} = \frac{1}{n} \sum_{k=1}^n \delta_{n+1,k} - \frac{1}{2n^2}
+\sum_{k,k'=1}^n \delta_{kk'}.
 	\]
-	The case in which the auto-similarity is known is handled by the option
-\verb+auto.sim+ in the function \verb+predict.somRes+ (file \verb+som.R+). In
-this case, the additional value \verb+auto.sim+ is used to pass the value of the
-auto-similarity to the function and the cosine preprocess is performed with this
-value instead of $\frac{1}{n}\sum_{i=1}^n \sqrt{s_{ii}}$;
+	Note that, once again, this transformation provides the same auto-similarity
+that original cosine pre-processing when used with one of the original sample.
+The cosine preprocess thus gives
+	\[
+		\tilde{s}_{n+1,i} = \frac{s_{n+1,i}}{\sqrt{s_{ii}} \sqrt{s_{n+1,n+1}}}.
+	\]
 	\item finally, the data is turned back into a similarity using the standard
 	\[
-		\tilde{\delta}_{ij} = \tilde{s}_{ii} + \tilde{s}_{jj} - 2\tilde{s}_{ij} =
-2-\tilde{s}_{ij}.
+		\tilde{\delta}_{n+1,i} = 2-\tilde{s}_{n+1,i}.
 	\]
 \end{enumerate}
 
-\emph{Remarks}:
-\begin{itemize}
-	\item Rather than stimating $\sqrt{s_{n+1,n+1}}$ by $\frac{1}{n}\sum_{i=1}^n
-\sqrt{s_{i,i}}$, $\max_{i=1,\ldots,n} \sqrt{|s_{n+1,i}|}$ could probably have
-been used.
-\end{itemize}
 
 % \bibliographystyle{apalike}
 % \bibliography{/home/nathalie/Private/Travail/Modeles/LaTeX/bibliototal}
