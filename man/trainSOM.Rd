@@ -59,8 +59,19 @@ Several variants able to handle non-vectorial data are also implemented in their
 stochastic versions: \code{type="korresp"} for contingency tables, as described
 in Cottrel et al., 1993; \code{type="relational"} for dissimilarity matrices, 
 as described in Olteany et al., 2012.
+
+\code{summary} produces a complete summary of the results that displays the 
+parameters of the SOM, quality criteria and ANOVA. For \code{type="numeric"}
+the ANOVA is performed for each input variable and test the difference of this
+variable accross the clsuters of the map. For \code{type="relational"} a 
+dissimilarity ANOVA is performed (see (Anderson, 2001), except that in the 
+present version, a crude estimate of the p-value is used which is based on the
+Fisher distribution and not on a permutation test.
 }
 \references{
+Anderson, M. J. (2001). A new method for non-parametric multivariate analysis of
+variance. \emph{Austral Ecology}, \strong{26}, 32--46. 
+
 Kohonen T. (2001) \emph{Self-Organizing Maps}. Berlin/Heidelberg:
 Springer-Verlag, 3rd edition.
 
@@ -73,6 +84,7 @@ Olteanu, M., Villa-Vialaneix, N. (2014) On-line relational and multiple
 relational SOM. \emph{Neurocomputing}. Forthcoming.
 }
 \author{Laura Bendhaiba \email{laurabendhaiba@gmail.com}\cr
+Julien Boelaert \email{julien.boelaert@gmail.com}\cr
 Madalina Olteanu \email{madalina.olteanu@univ-paris1.fr}\cr
 Nathalie Villa-Vialaneix \email{nathalie.villa@toulouse.inra.fr}
 }

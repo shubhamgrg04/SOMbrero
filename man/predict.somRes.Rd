@@ -31,6 +31,7 @@ When the algorithm's type is \code{"korresp"}, \code{x.new} must be the original
 contingency table passed to the algorithm.}
 
 \author{Laura Bendhaiba \email{laurabendhaiba@gmail.com}\cr
+Julien Boelaert \email{julien.boelaert@gmail.com}\cr
 Madalina Olteanu \email{madalina.olteanu@univ-paris1.fr}\cr
 Nathalie Villa-Vialaneix \email{nathalie.villa@toulouse.inra.fr}
 }

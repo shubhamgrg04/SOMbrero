@@ -60,14 +60,13 @@ summary.somSC <- function(object, ...) {
     cat("\n")
     
     if (object$som$parameters$type=="numeric") {
-      norm.data <- preprocessData(object$som$data, 
-                                  object$som$parameters$scaling)
       sc.clustering <- object$cluster[object$som$clustering]
       cat("\n  ANOVA\n")
-      res.anova <- as.data.frame(t(sapply(1:ncol(norm.data), function(ind) {
-        c(round(summary(aov(norm.data[,ind]~as.factor(sc.clustering)))
+      res.anova <- as.data.frame(t(sapply(1:ncol(object$som$data),
+                                          function(ind) {
+        c(round(summary(aov(object$som$data[,ind]~as.factor(sc.clustering)))
                 [[1]][1,4],digits=3),
-          round(summary(aov(norm.data[,ind]~as.factor(sc.clustering)))
+          round(summary(aov(object$som$data[,ind]~as.factor(sc.clustering)))
                 [[1]][1,5],digits=8))
       })))
       names(res.anova) <- c("F", "pvalue")
@@ -78,13 +77,14 @@ summary.somSC <- function(object, ...) {
       rownames(res.anova) <- colnames(object$som$data)
       
       cat("\n        Degrees of freedom : ", 
-          summary(aov(norm.data[,1]~as.factor(sc.clustering)))[[1]][1,1],
+          summary(aov(object$som$data[,1]~as.factor(sc.clustering)))[[1]][1,1],
           "\n\n")
-      print(res.anova)  
+      print(res.anova)
       cat("\n")
     } else if (object$som$parameters$type=="relational") {
-      norm.data <- preprocessData(object$som$data, 
-                                  object$som$parameters$scaling)
+      if (object$som$parameters$scaling=="cosine") {
+        norm.data <- preprocessData(object$som$data, object$parameters$scaling)
+      } else norm.data <- object$som$data
       sse.total <- sum(norm.data)/(2*nrow(norm.data))
       
       sc.clustering <- object$cluster[object$som$clustering]

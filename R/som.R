@@ -570,12 +570,11 @@ summary.somRes <- function(object, ...) {
   cat("\n      Final energy     :", object$energy,"\n")
   cat("      Topographic error:", topographicError(object), "\n")
   if (object$parameters$type=="numeric") {
-    norm.data <- preprocessData(object$data, object$parameters$scaling)
     cat("\n      ANOVA                : \n")
-    res.anova <- as.data.frame(t(sapply(1:ncol(norm.data), function(ind) {
-      c(round(summary(aov(norm.data[,ind]~as.factor(object$clustering)))
+    res.anova <- as.data.frame(t(sapply(1:ncol(object$data), function(ind) {
+      c(round(summary(aov(object$data[,ind]~as.factor(object$clustering)))
               [[1]][1,4],digits=3),
-        round(summary(aov(norm.data[,ind]~as.factor(object$clustering)))
+        round(summary(aov(object$data[,ind]~as.factor(object$clustering)))
               [[1]][1,5],digits=8))
     })))
     names(res.anova) <- c("F", "pvalue")
@@ -586,7 +585,7 @@ summary.somRes <- function(object, ...) {
     rownames(res.anova) <- colnames(object$data)
   
     cat("\n        Degrees of freedom : ", 
-        summary(aov(norm.data[,1]~as.factor(object$clustering)))[[1]][1,1],
+        summary(aov(object$data[,1]~as.factor(object$clustering)))[[1]][1,1],
         "\n\n")
     print(res.anova)  
     cat("\n")
@@ -601,7 +600,9 @@ summary.somRes <- function(object, ...) {
     cat("         p-value                 : ", chisq.res$p.value, "\n")
     cat("                 significativity : ", sig, "\n")
   } else if (object$parameters$type=="relational") {
-    norm.data <- preprocessData(object$data, object$parameters$scaling)
+    if (object$parameters$scaling=="cosine") {
+      norm.data <- preprocessData(object$data, object$parameters$scaling)
+    } else norm.data <- object$data
     sse.total <- sum(norm.data)/(2*nrow(norm.data))
     
     sse.within <- sum(sapply(unique(object$clustering), function(clust)
