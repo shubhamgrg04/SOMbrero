@@ -456,7 +456,7 @@ calculateEnergy <- function(x.data, clustering, prototypes, parameters, ind.t) {
 
 ##### Main function
 ################################################################################
-trainSOM <- function (x.data, ...) {
+trainSOM <- function (x.data, variant="fast", ...) {
   param.args <- list(...)
   ## Step 1: Parameters handling
   if (!is.matrix(x.data)) x.data <- as.matrix(x.data, rownames.force=TRUE)
@@ -534,98 +534,162 @@ trainSOM <- function (x.data, ...) {
     backup$steps <- round(seq(1,parameters$maxit,length=parameters$nb.save),0)
   }
   
-  ## Main Loop: from 1 to parameters$maxit
-  for (ind.t in 1:parameters$maxit) {
-    if (parameters$verbose) {
-      if (ind.t %in% round(seq(1, parameters$maxit, length=11))) {
-        index <- match(ind.t, round(seq(1, parameters$maxit, length=11)))
-        cat((index-1)*10, "% done\n")
-      }
+  
+  if (variant=="fast" & parameters$type!="relational") {
+    # Fast implementation switched to Rcpp functions
+    the.dist <- list()
+    dist.type <- parameters$the.grid$dist.type
+    if(dist.type=="letremy") {
+      the.dist$one <- as.matrix(dist(parameters$the.grid$coord, diag=TRUE, upper=TRUE,
+                                     method="euclidean"))
+      the.dist$two <- as.matrix(dist(parameters$the.grid$coord, diag=TRUE, upper=TRUE,
+                                     method="maximum"))
+    } else {
+      the.dist$one <- as.matrix(dist(parameters$the.grid$coord, diag=TRUE, upper=TRUE,
+                                     method=dist.type))
     }
-    
-    ## Step 6: Randomly choose an observation
-    rand.ind <- selectObs(ind.t, dim(x.data), parameters$type)
-    sel.obs <- norm.x.data[rand.ind,]
-    
-    ## Step 7: Assignment step
-    # For the "korresp" type, cut the prototypes and selected observation
+    if(parameters$type=="numeric") {
+      trainNumeric(prototypes, parameters, x.data, norm.x.data, backup, the.dist)
+    } else if (parameters$type=="korresp") {
+      trainKorresp(prototypes, parameters, x.data, norm.x.data, backup, the.dist)
+    }
     if (parameters$type=="korresp") {
-      if (ind.t%%2==0) {
-        cur.obs <- sel.obs[1:ncol(x.data)]
-        cur.prototypes <- prototypes[,1:ncol(x.data)]
-      } else {
-        cur.obs <- sel.obs[(ncol(x.data)+1):ncol(norm.x.data)]
-        cur.prototypes <- prototypes[,(ncol(x.data)+1):ncol(norm.x.data)]
-      }
-    } else {
-      cur.prototypes <- prototypes
-      cur.obs <- sel.obs
-    }
-    # Radius value
-    radius <- calculateRadius(parameters$the.grid, parameters$radius.type,
-                              ind.t, parameters$maxit)
-    # Assign
-    if (parameters$type=="relational") {
-      if (parameters$affectation=="standard") {
-        winner <- which.min(B[rand.ind,]-0.5*A)
-      } else {# Heskes's soft affectation
-        the.dist <- B[rand.ind,]-0.5*A
-        if (parameters$radius.type!="letremy") {
-          final.dist <- sapply(1:nrow(prototypes), function(a.neuron) {
-            the.nei <- selectNei(a.neuron, parameters$the.grid, radius, 
-                                 parameters$radius.type, parameters$the.grid$dist.type)
-            return(sum(the.dist*the.nei))
-          })
-        } else {
-          final.dist <- sapply(1:nrow(prototypes), function(a.neuron) {
-            the.nei <- selectNei(a.neuron, parameters$the.grid, radius, 
-                                 parameters$radius.type, parameters$the.grid$dist.type)
-            return(sum(the.dist[the.nei]))
-          })
+      rownames(backup$clustering) <- c(colnames(x.data), rownames(x.data))
+    } else rownames(backup$clustering) <- rownames(x.data)
+    res <- list("clustering"=backup$clustering[,parameters$nb.save],
+                "prototypes"=backup$prototypes[[parameters$nb.save]],
+                "energy"=backup$energy[parameters$nb.save], 
+                "backup"=backup, "data"=x.data,
+                "parameters"=parameters)
+    class(res) <- "somRes"
+    return(res)
+  } else if (variant=="slow" || parameters$type=="relational") {
+    ## Main Loop: from 1 to parameters$maxit
+    for (ind.t in 1:parameters$maxit) {
+      if (parameters$verbose) {
+        if (ind.t %in% round(seq(1, parameters$maxit, length=11))) {
+          index <- match(ind.t, round(seq(1, parameters$maxit, length=11)))
+          cat((index-1)*10, "% done\n")
         }
-        winner <- which.min(final.dist)
       }
-    } else {
-      winner <- oneObsAffectation(cur.obs, cur.prototypes, parameters$type,
-                                  parameters$affectation, norm.x.data, 
-                                  parameters$radius.type, radius, 
-                                  parameters$the.grid)
-    }
-    
-    ## Step 8: Representation step
-    the.nei <- selectNei(winner, parameters$the.grid, radius, 
-                         radius.type=parameters$radius.type,
-                         dist.type=parameters$the.grid$dist.type)
-    
-    epsilon <- 0.3*parameters$eps0/(1+0.2*ind.t/prod(parameters$the.grid$dim))
-    
-    if (parameters$type=="relational") {
-      # compute lambda
-      if (parameters$radius.type!="letremy") {
-        lambda <- as.vector(epsilon*the.nei)
+      
+      ## Step 6: Randomly choose an observation
+      rand.ind <- selectObs(ind.t, dim(x.data), parameters$type)
+      sel.obs <- norm.x.data[rand.ind,]
+      
+      ## Step 7: Assignment step
+      # For the "korresp" type, cut the prototypes and selected observation
+      if (parameters$type=="korresp") {
+        if (ind.t%%2==0) {
+          cur.obs <- sel.obs[1:ncol(x.data)]
+          cur.prototypes <- prototypes[,1:ncol(x.data)]
+        } else {
+          cur.obs <- sel.obs[(ncol(x.data)+1):ncol(norm.x.data)]
+          cur.prototypes <- prototypes[,(ncol(x.data)+1):ncol(norm.x.data)]
+        }
       } else {
-        lambda <- rep(0, length = nrow(prototypes))
-        lambda[the.nei] <- epsilon
+        cur.prototypes <- prototypes
+        cur.obs <- sel.obs
       }
-      # update distances matrix
-      A <- (1 - lambda)^2 * A + lambda^2 * norm.x.data[rand.ind,rand.ind] + 
-        2 * lambda * (1 - lambda) * B[rand.ind, ]
-      B <- sweep(B, 2, 1 - lambda, "*") + 
-        outer(norm.x.data[ ,rand.ind], lambda, "*")
-    }
-    
-    # Update
-    prototypes <- prototypeUpdate(parameters$type, the.nei, epsilon, 
-                                  prototypes, rand.ind, sel.obs,
-                                  parameters$radius.type)
-    
-    ## Step 9: Intermediate backups (if needed)
-    if (parameters$nb.save==1) {
-      warning("nb.save can not be 1\n No intermediate backups saved",
-              immediate.=TRUE, call.=TRUE)
-    }
-    if (parameters$nb.save>1) {
-      if(ind.t %in% backup$steps) {
+      # Radius value
+      radius <- calculateRadius(parameters$the.grid, parameters$radius.type,
+                                ind.t, parameters$maxit)
+      # Assign
+      if (parameters$type=="relational") {
+        if (parameters$affectation=="standard") {
+          winner <- which.min(B[rand.ind,]-0.5*A)
+        } else {# Heskes's soft affectation
+          the.dist <- B[rand.ind,]-0.5*A
+          if (parameters$radius.type!="letremy") {
+            final.dist <- sapply(1:nrow(prototypes), function(a.neuron) {
+              the.nei <- selectNei(a.neuron, parameters$the.grid, radius, 
+                                   parameters$radius.type, parameters$the.grid$dist.type)
+              return(sum(the.dist*the.nei))
+            })
+          } else {
+            final.dist <- sapply(1:nrow(prototypes), function(a.neuron) {
+              the.nei <- selectNei(a.neuron, parameters$the.grid, radius, 
+                                   parameters$radius.type, parameters$the.grid$dist.type)
+              return(sum(the.dist[the.nei]))
+            })
+          }
+          winner <- which.min(final.dist)
+        }
+      } else {
+        winner <- oneObsAffectation(cur.obs, cur.prototypes, parameters$type,
+                                    parameters$affectation, norm.x.data, 
+                                    parameters$radius.type, radius, 
+                                    parameters$the.grid)
+      }
+      
+      ## Step 8: Representation step
+      the.nei <- selectNei(winner, parameters$the.grid, radius, 
+                           radius.type=parameters$radius.type,
+                           dist.type=parameters$the.grid$dist.type)
+      
+      epsilon <- 0.3*parameters$eps0/(1+0.2*ind.t/prod(parameters$the.grid$dim))
+      
+      if (parameters$type=="relational") {
+        # compute lambda
+        if (parameters$radius.type!="letremy") {
+          lambda <- as.vector(epsilon*the.nei)
+        } else {
+          lambda <- rep(0, length = nrow(prototypes))
+          lambda[the.nei] <- epsilon
+        }
+        # update distances matrix
+        A <- (1 - lambda)^2 * A + lambda^2 * norm.x.data[rand.ind,rand.ind] + 
+          2 * lambda * (1 - lambda) * B[rand.ind, ]
+        B <- sweep(B, 2, 1 - lambda, "*") + 
+          outer(norm.x.data[ ,rand.ind], lambda, "*")
+      }
+      
+      # Update
+      prototypes <- prototypeUpdate(parameters$type, the.nei, epsilon, 
+                                    prototypes, rand.ind, sel.obs,
+                                    parameters$radius.type)
+      
+      ## Step 9: Intermediate backups (if needed)
+      if (parameters$nb.save==1) {
+        warning("nb.save can not be 1\n No intermediate backups saved",
+                immediate.=TRUE, call.=TRUE)
+      }
+      if (parameters$nb.save>1) {
+        if(ind.t %in% backup$steps) {
+          out.proto <- switch(parameters$scaling,
+                              "unitvar"=scale(prototypes, 
+                                              center=-apply(x.data,2,mean)/
+                                                apply(x.data,2,sd),
+                                              scale=1/apply(x.data,2,sd)),
+                              "center"=scale(prototypes, 
+                                             center=-apply(x.data,2,mean),
+                                             scale=FALSE),
+                              "none"=prototypes,
+                              "chi2"=prototypes,
+                              "cosine"=prototypes)
+          colnames(out.proto) <- colnames(norm.x.data)
+          rownames(out.proto) <- 1:prod(parameters$the.grid$dim)
+          res <- list("parameters"=parameters, "prototypes"=out.proto, 
+                      "data"=x.data)
+          class(res) <- "somRes"
+          
+          ind.s <- match(ind.t,backup$steps)
+          backup$prototypes[[ind.s]] <- out.proto
+          if (parameters$type=="relational") {
+            backup$clustering[,ind.s] <- predictRSOM(res, radius=radius, A=A, B=B)
+          } else backup$clustering[,ind.s] <- predict.somRes(res, radius=radius)
+          backup$energy[ind.s] <- calculateEnergy(norm.x.data,
+                                                  backup$clustering[,ind.s],
+                                                  prototypes, parameters, ind.t)
+        }
+        if (ind.t==parameters$maxit) {
+          clustering <- backup$clustering[,ind.s]
+          if (parameters$type=="korresp") {
+            names(clustering) <- c(colnames(x.data), rownames(x.data))
+          } else names(clustering) <- rownames(x.data)
+          energy <- backup$energy[ind.s]
+        }
+      } else if (ind.t==parameters$maxit) {
         out.proto <- switch(parameters$scaling,
                             "unitvar"=scale(prototypes, 
                                             center=-apply(x.data,2,mean)/
@@ -637,70 +701,41 @@ trainSOM <- function (x.data, ...) {
                             "none"=prototypes,
                             "chi2"=prototypes,
                             "cosine"=prototypes)
-        colnames(out.proto) <- colnames(norm.x.data)
-        rownames(out.proto) <- 1:prod(parameters$the.grid$dim)
-        res <- list("parameters"=parameters, "prototypes"=out.proto, 
+        
+        res <- list("parameters"=parameters, "prototypes"=out.proto,
                     "data"=x.data)
         class(res) <- "somRes"
-        
-        ind.s <- match(ind.t,backup$steps)
-        backup$prototypes[[ind.s]] <- out.proto
         if (parameters$type=="relational") {
-          backup$clustering[,ind.s] <- predictRSOM(res, radius=radius, A=A, B=B)
-        } else backup$clustering[,ind.s] <- predict.somRes(res, radius=radius)
-        backup$energy[ind.s] <- calculateEnergy(norm.x.data,
-                                                backup$clustering[,ind.s],
-                                                prototypes, parameters, ind.t)
-      }
-      if (ind.t==parameters$maxit) {
-        clustering <- backup$clustering[,ind.s]
+          clustering <- predictRSOM(res, A=A, B=B)
+        } else clustering <- predict.somRes(res)
         if (parameters$type=="korresp") {
           names(clustering) <- c(colnames(x.data), rownames(x.data))
         } else names(clustering) <- rownames(x.data)
-        energy <- backup$energy[ind.s]
+        energy <- calculateEnergy(norm.x.data, clustering, prototypes, parameters,
+                                  ind.t)
       }
-    } else if (ind.t==parameters$maxit) {
-      out.proto <- switch(parameters$scaling,
-                          "unitvar"=scale(prototypes, 
-                                          center=-apply(x.data,2,mean)/
-                                            apply(x.data,2,sd),
-                                          scale=1/apply(x.data,2,sd)),
-                          "center"=scale(prototypes, 
-                                         center=-apply(x.data,2,mean),
-                                         scale=FALSE),
-                          "none"=prototypes,
-                          "chi2"=prototypes,
-                          "cosine"=prototypes)
-      
-      res <- list("parameters"=parameters, "prototypes"=out.proto,
-                  "data"=x.data)
-      class(res) <- "somRes"
-      if (parameters$type=="relational") {
-        clustering <- predictRSOM(res, A=A, B=B)
-      } else clustering <- predict.somRes(res)
-      if (parameters$type=="korresp") {
-        names(clustering) <- c(colnames(x.data), rownames(x.data))
-      } else names(clustering) <- rownames(x.data)
-      energy <- calculateEnergy(norm.x.data, clustering, prototypes, parameters,
-                                ind.t)
     }
+    
+    colnames(out.proto) <- colnames(norm.x.data)
+    rownames(out.proto) <- 1:prod(parameters$the.grid$dim)
+    names(backup$prototypes) <- 1:length(backup$steps)
+    if (parameters$nb.save<=1) {
+      res <- list("clustering"=clustering, "prototypes"=out.proto,
+                  "energy"=energy, "data"=x.data, "parameters"=parameters)
+    } else {
+      if (parameters$type=="korresp") {
+        rownames(backup$clustering) <- c(colnames(x.data), rownames(x.data))
+      } else rownames(backup$clustering) <- rownames(x.data)
+      res <- list("clustering"=clustering, "prototypes"=out.proto,
+                  "energy"=energy, "backup"=backup, "data"=x.data, 
+                  "parameters"=parameters)
+    }
+    class(res) <- "somRes"
+    return(res)
+  } else {
+    stop("Expecting 'fast' or 'slow' as input for variants while received '",variant, "'", call.=TRUE)
   }
   
-  colnames(out.proto) <- colnames(norm.x.data)
-  rownames(out.proto) <- 1:prod(parameters$the.grid$dim)
-  if (parameters$nb.save<=1) {
-    res <- list("clustering"=clustering, "prototypes"=out.proto,
-                "energy"=energy, "data"=x.data, "parameters"=parameters)
-  } else {
-    if (parameters$type=="korresp") {
-      rownames(backup$clustering) <- c(colnames(x.data), rownames(x.data))
-    } else rownames(backup$clustering) <- rownames(x.data)
-    res <- list("clustering"=clustering, "prototypes"=out.proto,
-                "energy"=energy, "backup"=backup, "data"=x.data, 
-                "parameters"=parameters)
-  }
-  class(res) <- "somRes"
-  return(res)
 }
 
 projectGraph <- function(the.graph, clustering, coord.clustering) {

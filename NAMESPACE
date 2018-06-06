@@ -1,3 +1,5 @@
+useDynLib(SOMbrero, .registration=TRUE)
+exportPattern("^[[:alpha:]]+")
 ## imports from base packages
 importFrom(grDevices, cm.colors, heat.colors, rainbow)
 importFrom(graphics, abline, box, layout, legend, par,
@@ -7,6 +9,7 @@ importFrom(stats, aov, as.dist, chisq.test, cmdscale,
            rect.hclust, runif, sd)
 
 ## imports
+importFrom(Rcpp, evalCpp)
 importFrom(scatterplot3d, scatterplot3d)
 importFrom(wordcloud, wordcloud)
 import(igraph)
