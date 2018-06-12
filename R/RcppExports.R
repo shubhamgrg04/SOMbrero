@@ -17,3 +17,7 @@ trainKorresp <- function(prototypes, parameters, x_data, norm_x_data, backup, th
     invisible(.Call(`_SOMbrero_trainKorresp`, prototypes, parameters, x_data, norm_x_data, backup, the_dist))
 }
 
+trainRelational <- function(prototypes, parameters, x_data, norm_x_data, backup, the_dist) {
+    invisible(.Call(`_SOMbrero_trainRelational`, prototypes, parameters, x_data, norm_x_data, backup, the_dist))
+}
+

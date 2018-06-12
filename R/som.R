@@ -535,7 +535,7 @@ trainSOM <- function (x.data, variant="fast", ...) {
   }
   
   
-  if (variant=="fast" & parameters$type!="relational") {
+  if (variant=="fast") {
     # Fast implementation switched to Rcpp functions
     the.dist <- list()
     dist.type <- parameters$the.grid$dist.type
@@ -552,10 +552,14 @@ trainSOM <- function (x.data, variant="fast", ...) {
       trainNumeric(prototypes, parameters, x.data, norm.x.data, backup, the.dist)
     } else if (parameters$type=="korresp") {
       trainKorresp(prototypes, parameters, x.data, norm.x.data, backup, the.dist)
+    } else if (parameters$type=="relational") {
+      trainRelational(prototypes, parameters, x.data, norm.x.data, backup, the.dist)
     }
-    if (parameters$type=="korresp") {
-      rownames(backup$clustering) <- c(colnames(x.data), rownames(x.data))
-    } else rownames(backup$clustering) <- rownames(x.data)
+    print("done till here")
+    # if (parameters$type=="korresp") {
+    #   rownames(backup$clustering) <- c(colnames(x.data), rownames(x.data))
+    # } else rownames(backup$clustering) <- rownames(x.data)
+    print("done till here 2")
     res <- list("clustering"=backup$clustering[,parameters$nb.save],
                 "prototypes"=backup$prototypes[[parameters$nb.save]],
                 "energy"=backup$energy[parameters$nb.save], 
@@ -563,7 +567,7 @@ trainSOM <- function (x.data, variant="fast", ...) {
                 "parameters"=parameters)
     class(res) <- "somRes"
     return(res)
-  } else if (variant=="slow" || parameters$type=="relational") {
+  } else if (variant=="slow") {
     ## Main Loop: from 1 to parameters$maxit
     for (ind.t in 1:parameters$maxit) {
       if (parameters$verbose) {

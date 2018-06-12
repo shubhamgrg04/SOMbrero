@@ -415,7 +415,6 @@ void trainNumeric(NumericMatrix prototypes, List parameters, NumericMatrix x_dat
       }
       rownames(out_proto) = rnames;
       int ind_s = std::distance(backup_steps.begin(),backup_steps.find(ind));
-      // todo: check why clone is needed
       backup_proto[int_to_str(ind_s+1)] = clone(out_proto);
       backup_clustering(_,ind_s) = obsAffectation_F(prototypes, x_data);
       IntegerVector f_x = obsAffectation_F(prototypes, norm_x_data);
@@ -440,8 +439,6 @@ void trainNumeric(NumericMatrix prototypes, List parameters, NumericMatrix x_dat
   backup["clustering"] = backup_clustering;
   backup["energy"] = backup_energy;
 }
-
-
 
 // [[Rcpp::export]]
 void trainKorresp(NumericMatrix prototypes, List parameters, NumericMatrix x_data, NumericMatrix norm_x_data, List backup, List the_dist){
@@ -523,7 +520,6 @@ void trainKorresp(NumericMatrix prototypes, List parameters, NumericMatrix x_dat
       }
       rownames(out_proto) = rnames;
       int ind_s = std::distance(backup_steps.begin(),backup_steps.find(ind));
-      // todo: check why clone is needed
       backup_proto[int_to_str(ind_s+1)] = clone(out_proto);
       NumericMatrix input_rows = subsetNumMat(subsetNumMat(norm_x_data, Range(1,x_data.cols()), 2), Range(1,x_data.rows()), 1);
       NumericMatrix input_prototypes_rows = subsetNumMat(prototypes, Range(1,x_data.cols()), 2);
@@ -555,3 +551,149 @@ void trainKorresp(NumericMatrix prototypes, List parameters, NumericMatrix x_dat
   backup["clustering"] = backup_clustering;
   backup["energy"] = backup_energy;
 }
+
+// [[Rcpp::export]]
+void trainRelational(NumericMatrix prototypes, List parameters, NumericMatrix x_data, NumericMatrix norm_x_data, List backup, List the_dist){
+  
+  // Converting arguments to Rcpp
+  std::string type = as< std::vector<std::string> >(parameters["type"])[0];
+  std::string affectation = as< std::vector<std::string> >(parameters["affectation"])[0];
+  std::string radius_type = as< std::vector<std::string> >(parameters["radius.type"])[0];
+  List the_grid = as<List>(parameters["the.grid"]);
+  std::string dist_type = as< std::vector<std::string> >(the_grid["dist.type"])[0];
+  NumericMatrix coords = as<NumericMatrix>(the_grid["coord"]);
+  std::string scaling = as< std::vector<std::string> >(parameters["scaling"])[0];
+  IntegerVector nb_save = as<IntegerVector>(parameters["nb.save"]);
+  IntegerVector dim = as<IntegerVector>(the_grid["dim"]);
+  NumericVector eps0 = as<NumericVector>(parameters["eps0"]);
+  int maxit = as<IntegerVector>(parameters["maxit"])[0];
+  std::string verbose = as< std::vector<std::string> >(parameters["verbose"])[0];
+  
+  // Setting up iterations for backup and progess
+  std::set<int> backup_steps = generateEquiSteps(1,maxit,nb_save[0]) ;
+  std::set<int> completion_steps = generateEquiSteps(1,maxit,10);
+  
+  // Backup Initialization
+  List backup_proto;
+  NumericMatrix backup_clustering(x_data.rows()+x_data.cols(), nb_save[0]);
+  NumericVector backup_energy(nb_save[0],0.0);
+  
+  //NumericMatrix coordDists = calculateDistanceMatrix(coords);
+  NumericMatrix coordDists, coordDists2;
+  coordDists = as<NumericMatrix>(the_dist["one"]);
+  if(dist_type.compare("letremy")==0) {
+    coordDists2 = as<NumericMatrix>(the_dist["two"]);
+  }
+  
+  Eigen::MatrixXd NORM_X_DATA(as<MapMat>(norm_x_data));
+  Eigen::MatrixXd PROTOTYPES(as<MapMat>(prototypes));
+  
+  Eigen::MatrixXd B = NORM_X_DATA * PROTOTYPES.transpose();
+  Eigen::VectorXd A = (PROTOTYPES * B).diagonal();
+  NumericVector lambda(prototypes.rows(),0.0);
+  
+  for(int ind=1; ind<= maxit; ind++) {
+    
+    // Step 6 : Randomly choose an observation (indexed from 1)
+    IntegerVector rand_ind = selectObs_F(ind, IntegerVector::create(x_data.rows(), x_data.cols()), type );
+    NumericMatrix sel_obs(1, norm_x_data.cols());
+    sel_obs(0, Rcpp::_) = norm_x_data(rand_ind[0]-1, Rcpp::_ );
+    
+    Rcout << "rand_ind: " << rand_ind[0] << std::endl;
+    
+    // Step 7 : Assignment step
+    NumericMatrix cur_obs = sel_obs;
+    NumericMatrix cur_prototypes = prototypes;
+    double radius = calculateRadius_f(dim, radius_type, ind, maxit);
+    
+    Rcout << "cur_obs: " << cur_obs << std::endl;
+    
+    // winner indexed at 1
+    IntegerVector winner(1,1);
+    for(int i=1, min=B(rand_ind[0]-1,0)-0.5*A(0); i<B.cols(); i++) {
+      if( (B(rand_ind[0]-1,i)-0.5*A(i))<min ) {
+        min = B(rand_ind[0]-1,i)-0.5*A(i);
+        winner[0] = i+1;
+      }
+    }
+    
+    Rcout << "winner: " << winner[0] << std::endl;
+    
+    //Step 8 : Representation Step
+    NumericVector the_nei;
+    if(dist_type.compare("letremy")==0) the_nei = selectNei_f(winner[0]-1, ind, radius, coordDists, coordDists2, radius_type);
+    else the_nei = selectNei_f(winner[0]-1, ind, radius, coordDists, radius_type);
+    double epsilon = 0.3*eps0[0]/(1+0.2*ind/(dim[0]*dim[1]));
+    
+    // compute lambda
+    // if(radius_type.compare("letremy")!=0) {
+    //   lambda = epsilon * the_nei;
+    // } else {
+    //   lambda = NumericVector(prototypes.rows(), epsilon);
+    //   // for(int i=0; i<the_nei.size(); i++)
+    //   //   lambda[i] = epsilon;
+    // }
+    lambda = epsilon * the_nei;
+    Rcout << "lambda: " << lambda << std::endl;
+    
+    // update distance matrix
+    Eigen::VectorXd LAMBDA(as<MapVec>(lambda));
+    A = ((1-LAMBDA.array()).square()*A.array() + LAMBDA.array().square()*NORM_X_DATA(rand_ind[0]+1, rand_ind[0]+1) + 2*LAMBDA.array()*(1-LAMBDA.array()*B.row(rand_ind[0]+1).array())).matrix();
+    B = ( B.array().colwise() * (1-LAMBDA.array()) + (NORM_X_DATA.col(rand_ind[0]+1)*LAMBDA).array() ).matrix();
+    
+    // Update
+    for(int i=0; i<prototypes.rows(); i++) {
+      prototypes(i,_) = (1-epsilon*the_nei[i])*prototypes(i,_) + epsilon*the_nei[i]*sel_obs(0,_);
+    }
+    
+    
+    //create backup
+    if(backup_steps.find(ind)!=backup_steps.end()){
+      NumericMatrix out_proto = scaleMatrix(prototypes, scaling);
+      colnames(out_proto) = colnames(norm_x_data);
+      Rcout << "Step 1 done" << std::endl;
+      CharacterVector rnames(out_proto.rows());
+      for(int i=0; i<rnames.size(); i++) {
+        rnames(i) = int_to_str(i+1);
+      }
+      rownames(out_proto) = rnames;
+      Rcout << "Step 2 done" << std::endl;
+      int ind_s = std::distance(backup_steps.begin(),backup_steps.find(ind));
+      backup_proto[int_to_str(ind_s+1)] = clone(out_proto);
+      for(int row=0; row<B.rows(); row++) {
+        backup_clustering(row,ind_s) = 1;
+        double min=B(row,0)-0.5*A(0);
+        for(int col=1; col<B.cols(); col++) {
+          if( (B(row,col)-0.5*A(col))<min ) {
+            min = B(row,col)-0.5*A(col);
+            backup_clustering(row,ind_s) = col+1;
+          }
+        }
+      }
+      //backup_clustering(_,ind_s) = obsAffectation_F(prototypes, x_data);
+      Rcout << "Step 3 done" << std::endl;
+      IntegerVector f_x = obsAffectation_F(prototypes, norm_x_data);
+      for(int i=0; i<norm_x_data.rows(); i++) {
+        if(dist_type.compare("letremy")==0) the_nei = selectNei_f(f_x[i]-1, ind, radius, coordDists, coordDists2, radius_type);
+        else the_nei = selectNei_f(f_x[i]-1, ind, radius, coordDists, radius_type);
+        backup_energy[ind_s] += sum( the_nei*obsDistance(prototypes, norm_x_data, i) );
+      }
+      Rcout << "Step 4 done" << std::endl;
+      Rcout << "nb.save: " << nb_save[0] << "ind_s" << ind_s << std::endl;
+      backup_energy[ind_s] /= (norm_x_data.rows() * prototypes.rows());
+    }
+    
+    //  Logging completion to Rcout
+    if(verbose.compare("true")==0) {
+      if(completion_steps.find(ind)!=completion_steps.end()) {
+        int p_completion = std::distance(completion_steps.begin(),completion_steps.find(ind))+1;
+        Rcout << 10*p_completion << "% done" << std::endl;
+      } 
+    }
+    
+  }
+  backup["prototypes"] = backup_proto;
+  backup["clustering"] = backup_clustering;
+  backup["energy"] = backup_energy;
+}
+
