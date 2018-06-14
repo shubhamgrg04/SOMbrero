@@ -535,7 +535,7 @@ trainSOM <- function (x.data, variant="fast", ...) {
   }
   
   
-  if (variant=="fast") {
+  if (variant=="fast" && parameters$type!="relational") {
     # Fast implementation switched to Rcpp functions
     the.dist <- list()
     dist.type <- parameters$the.grid$dist.type
@@ -555,11 +555,32 @@ trainSOM <- function (x.data, variant="fast", ...) {
     } else if (parameters$type=="relational") {
       trainRelational(prototypes, parameters, x.data, norm.x.data, backup, the.dist)
     }
-    print("done till here")
-    # if (parameters$type=="korresp") {
-    #   rownames(backup$clustering) <- c(colnames(x.data), rownames(x.data))
-    # } else rownames(backup$clustering) <- rownames(x.data)
-    print("done till here 2")
+    #print("done till here")
+    if (parameters$type=="korresp") {
+      rownames(backup$clustering) <- c(colnames(x.data), rownames(x.data))
+    } else rownames(backup$clustering) <- rownames(x.data)
+    #print("done till here 2")
+    for(ind.b in 1:parameters$nb.save) {
+      backup$prototypes$ind.b <- switch(parameters$scaling,
+                                  "unitvar"=scale(backup$prototypes[[ind.b]], 
+                                                  center=-apply(x.data,2,mean)/
+                                                    apply(x.data,2,sd),
+                                                  scale=1/apply(x.data,2,sd)),
+                                  "center"=scale(backup$prototypes$ind.b, 
+                                                 center=-apply(x.data,2,mean),
+                                                 scale=FALSE),
+                                  "none"=backup$prototypes$ind.b,
+                                  "chi2"=backup$prototypes$ind.b,
+                                  "cosine"=backup$prototypes$ind.b)
+      res <- list("parameters"=parameters, "prototypes"=backup$prototypes[[ind.b]], 
+                  "data"=x.data)
+      class(res) <- "somRes"
+      radius <- calculateRadius(parameters$the.grid, parameters$radius.type,
+                                backup$steps[ind.b], parameters$maxit)
+      if (parameters$type=="relational") {
+        backup$clustering[,ind.s] <- predictRSOM(res, radius=radius, A=A, B=B)
+      } else backup$clustering[,ind.b] <- predict.somRes(res, radius=radius)
+    }
     res <- list("clustering"=backup$clustering[,parameters$nb.save],
                 "prototypes"=backup$prototypes[[parameters$nb.save]],
                 "energy"=backup$energy[parameters$nb.save], 
@@ -567,7 +588,7 @@ trainSOM <- function (x.data, variant="fast", ...) {
                 "parameters"=parameters)
     class(res) <- "somRes"
     return(res)
-  } else if (variant=="slow") {
+  } else if (variant=="slow" || parameters$type=="relational") {
     ## Main Loop: from 1 to parameters$maxit
     for (ind.t in 1:parameters$maxit) {
       if (parameters$verbose) {
@@ -901,7 +922,7 @@ predictRSOM <- function(object, x.new=NULL, radius=0, tolerance=10^(-10),
   return(winners)
 }
 
-predict.somRes <- function(object, x.new=NULL, ..., radius=0, 
+predict.somRes <- function(object, variant="slow", x.new=NULL, ..., radius=0, 
                            tolerance=10^(-10)) {
   ## korresp
   if(object$parameters$type=="korresp") {
@@ -954,12 +975,17 @@ predict.somRes <- function(object, x.new=NULL, ..., radius=0,
                          "none"=x.new)
     norm.proto <- preprocessProto(object$prototypes, object$parameters$scaling,
                                   object$data)
-    winners <- obsAffectation(norm.x.new, prototypes=norm.proto,
-                              type=object$parameters$type,
-                              affectation=object$parameters$affectation,
-                              radius.type=object$parameters$radius.type,
-                              radius=radius, 
-                              the.grid=object$parameters$the.grid)
+    if(variant=="fast") {
+      winners <- obsAffectation_F(norm.proto, norm.x.new);
+    } else {
+      winners <- obsAffectation(norm.x.new, prototypes=norm.proto,
+                                type=object$parameters$type,
+                                affectation=object$parameters$affectation,
+                                radius.type=object$parameters$radius.type,
+                                radius=radius, 
+                                the.grid=object$parameters$the.grid)
+    }
+    
     
     } else if (object$parameters$type=="relational") { ## relational
       if (object$parameters$scaling == "cosine") 

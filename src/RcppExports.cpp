@@ -7,14 +7,14 @@
 using namespace Rcpp;
 
 // obsAffectation_F
-IntegerVector obsAffectation_F(NumericMatrix& BB, NumericMatrix& CC);
-RcppExport SEXP _SOMbrero_obsAffectation_F(SEXP BBSEXP, SEXP CCSEXP) {
+IntegerVector obsAffectation_F(NumericMatrix& protos, NumericMatrix& x_new);
+RcppExport SEXP _SOMbrero_obsAffectation_F(SEXP protosSEXP, SEXP x_newSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix& >::type BB(BBSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix& >::type CC(CCSEXP);
-    rcpp_result_gen = Rcpp::wrap(obsAffectation_F(BB, CC));
+    Rcpp::traits::input_parameter< NumericMatrix& >::type protos(protosSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix& >::type x_new(x_newSEXP);
+    rcpp_result_gen = Rcpp::wrap(obsAffectation_F(protos, x_new));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -60,28 +60,12 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// trainRelational
-void trainRelational(NumericMatrix prototypes, List parameters, NumericMatrix x_data, NumericMatrix norm_x_data, List backup, List the_dist);
-RcppExport SEXP _SOMbrero_trainRelational(SEXP prototypesSEXP, SEXP parametersSEXP, SEXP x_dataSEXP, SEXP norm_x_dataSEXP, SEXP backupSEXP, SEXP the_distSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type prototypes(prototypesSEXP);
-    Rcpp::traits::input_parameter< List >::type parameters(parametersSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type x_data(x_dataSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type norm_x_data(norm_x_dataSEXP);
-    Rcpp::traits::input_parameter< List >::type backup(backupSEXP);
-    Rcpp::traits::input_parameter< List >::type the_dist(the_distSEXP);
-    trainRelational(prototypes, parameters, x_data, norm_x_data, backup, the_dist);
-    return R_NilValue;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_SOMbrero_obsAffectation_F", (DL_FUNC) &_SOMbrero_obsAffectation_F, 2},
     {"_SOMbrero_scaleMatrix", (DL_FUNC) &_SOMbrero_scaleMatrix, 2},
     {"_SOMbrero_trainNumeric", (DL_FUNC) &_SOMbrero_trainNumeric, 6},
     {"_SOMbrero_trainKorresp", (DL_FUNC) &_SOMbrero_trainKorresp, 6},
-    {"_SOMbrero_trainRelational", (DL_FUNC) &_SOMbrero_trainRelational, 6},
     {NULL, NULL, 0}
 };
 

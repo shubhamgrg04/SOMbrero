@@ -30,7 +30,7 @@ NumericMatrix calculateDistanceMatrix(NumericMatrix coords){
 // Returns a numeric vector with the same length as of grid units
 // For gaussian radius_type, it returns coefficient vector like (0.95, 0.86, 0.23, 0.01)
 // For letremy radius_type, it returns coefficient vector like (1,1,0,0,0)
-NumericVector selectNei_f(int the_neuron, int iteration, double radius, NumericMatrix& distMatrix, std::string radius_type){
+NumericVector selectNei_f(int the_neuron, double radius, NumericMatrix& distMatrix, std::string radius_type){
   NumericVector out( distMatrix.rows() ) ;
   if(radius_type.compare("letremy")==0) {
     for(int i=0; i<distMatrix.rows(); i++) {
@@ -58,7 +58,7 @@ NumericVector selectNei_f(int the_neuron, int iteration, double radius, NumericM
 }
 
 // For dist_type = letremy
-NumericVector selectNei_f(int the_neuron, int iteration, double radius, NumericMatrix& distMatrix1, NumericMatrix& distMatrix2, std::string radius_type){
+NumericVector selectNei_f(int the_neuron, double radius, NumericMatrix& distMatrix1, NumericMatrix& distMatrix2, std::string radius_type){
   NumericVector out( distMatrix1.rows() ) ;
   for(int i=0; i<distMatrix1.rows(); i++) {
     if((radius==0.5 && distMatrix1(the_neuron,i)<=1) || distMatrix2(the_neuron,i)<=radius) 
@@ -90,9 +90,9 @@ double calculateRadius_f(IntegerVector dim, std::string radius_type, int ind, in
 
 // Returns closest prototype for a input observations CC
 // [[Rcpp::export]]
-IntegerVector obsAffectation_F(NumericMatrix& BB, NumericMatrix& CC) {
-  const MapMat Prototypes(as<MapMat>(BB));
-  const MapMat New(as<MapMat>(CC));
+IntegerVector obsAffectation_F(NumericMatrix& protos, NumericMatrix& x_new) {
+  const MapMat Prototypes(as<MapMat>(protos));
+  const MapMat New(as<MapMat>(x_new));
   Eigen::MatrixXd dist1((Prototypes * New.transpose()));
   Eigen::VectorXd dist2((Prototypes * Prototypes.transpose()).diagonal());
   IntegerVector winners(New.rows());
@@ -110,6 +110,15 @@ IntegerVector obsAffectation_F(NumericMatrix& BB, NumericMatrix& CC) {
   }
   return winners;
 }
+
+// IntegerVector predictNumeric(List SOMobj, NumericMatrix x_new){
+//   List parameters = as<List>(SOMobs["parameters"]);
+//   std::string type = as< std::vector<std::string> >(parameters["type"])[0];
+//   NumericMatrix prototypes = as<NumericMatrix>(SOMobj["prototypes"]);
+//   if(type.compare("korresp")==0) {
+//     
+//   }
+// }
 
 IntegerVector selectObs_F(int ind, IntegerVector ddim, std::string type) {
   if(type.compare("korresp")==0) {
@@ -136,91 +145,25 @@ IntegerVector min_element(Eigen::VectorXd& vec) {
   return min_element;
 }
 
-IntegerVector oneObsAffectation_F(NumericMatrix& x_new, NumericMatrix& prototypes, 
-                          std::string type, std::string affectation, 
-                          std::string radius_type, NumericVector radius, 
-                          List the_grid) {
-  // obs are indexed from 0
+IntegerVector heskeAffectation(NumericMatrix& x_new, NumericMatrix& prototypes, 
+                               std::string type, std::string radius_type, std::string dist_type, 
+                               double radius, NumericMatrix coordDists, NumericMatrix coordDists2=NumericMatrix::get_na()) {
   IntegerVector the_neuron;
-  const MapMat Prototypes(as<MapMat>(prototypes));
-  const MapMat New(as<MapMat>(x_new));
-  if(affectation.compare("standard")==0) {
-    if(type.compare("relational")==0) {
-      Eigen::VectorXd dist( Prototypes*New - 0.5*(Prototypes*New*Prototypes.transpose()).diagonal() );
-      the_neuron = min_element(dist);
-    } else {
-      the_neuron = obsAffectation_F(prototypes, x_new);
+  NumericVector the_dist = obsDistance(prototypes, x_new, 0);
+  int min_i=0;
+  double min_d=std::numeric_limits<double>::max();
+  for(int i=0; i<prototypes.rows(); i++) {
+    NumericVector the_nei;
+    if(dist_type.compare("letremy")==0) the_nei = selectNei_f(i, radius, coordDists, coordDists2, radius_type);
+    else the_nei = selectNei_f(i, radius, coordDists, radius_type);
+    NumericVector prods = the_dist*the_nei;
+    double current_d = sum(prods);
+    if ( current_d < min_d) {
+      min_i = i;
+      min_d = current_d;
     }
-  } else {
-    // Heske's Soft Affectation
-    /*
-    if(type.compare("relational")==0)  {
-      
-      if(radius_type.compare("letremy")!=0) {
-        Eigen::VectorXd the_dist( Prototypes*New - 0.5*(Prototypes*New*Prototypes.transpose()).diagonal() );
-        double min_d = std::numeric_limits<double>::max();
-        int min_i = 0;
-        for(int i=0; i<Prototypes.rows(); i++) {
-          Eigen::VectorXd the_nei( as<MapVec>(selectNei(IntegerVector::create(i), the_grid, radius, CharacterVector::create(radius_type), as<CharacterVector>(the_grid["dist.type"]))) );
-          double current_d = (the_dist*the_nei).sum();
-          if ( current_d < min_d) {
-            min_i = i;
-            min_d = current_d;
-          }
-        }
-        the_neuron = IntegerVector::create(min_i);
-      } else {
-        Eigen::VectorXd the_dist( Prototypes*New - 0.5*(Prototypes*New*Prototypes.transpose()).diagonal() );
-        double min_d = std::numeric_limits<double>::max();
-        int min_i = 0;
-        for(int i=0; i<Prototypes.rows(); i++) {
-          IntegerVector the_nei = as<IntegerVector>( selectNei(IntegerVector::create(i), the_grid, radius, CharacterVector::create(radius_type), as<CharacterVector>(the_grid["dist.type"])) );
-          double current_d = 0;
-          for(int j=0; j<the_nei.size(); j++) {
-            if(the_nei[j] == true) current_d += the_dist[j];
-          }
-          if ( current_d < min_d) {
-            min_i = i;
-            min_d = current_d;
-          }
-        }
-        the_neuron = IntegerVector::create(min_i);
-      }
-       
-    } else {
-      if(radius_type.compare("letremy")!=0) {
-        Eigen::VectorXd the_dist( (Prototypes-New).array().square().rowwise().sum().sqrt() );
-        double min_d = std::numeric_limits<double>::max();
-        int min_i = 0;
-        for(int i=0; i<Prototypes.rows(); i++) {
-          Eigen::VectorXd the_nei( as<MapVec>(selectNei(IntegerVector::create(i), the_grid, radius, CharacterVector::create(radius_type), as<CharacterVector>(the_grid["dist.type"]))) );
-          double current_d = (the_dist*the_nei).sum();
-          if ( current_d < min_d) {
-            min_i = i;
-            min_d = current_d;
-          }
-        }
-        the_neuron = IntegerVector::create(min_i);
-      } else {
-        Eigen::VectorXd the_dist( (Prototypes-New).array().square().rowwise().sum().sqrt() );
-        double min_d = std::numeric_limits<double>::max();
-        int min_i = 0;
-        for(int i=0; i<Prototypes.rows(); i++) {
-          LogicalVector the_nei = selectNei(IntegerVector::create(i), the_grid, radius, CharacterVector::create(radius_type), as<CharacterVector>(the_grid["dist.type"]));
-          double current_d = 0;
-          for(int j=0; j<the_nei.size(); j++) {
-            if(the_nei[j] == true) current_d += the_dist[j];
-          }
-          if ( current_d < min_d) {
-            min_i = i;
-            min_d = current_d;
-          }
-        }
-        the_neuron = IntegerVector::create(min_i);
-      }
-    }
-     */
-  } 
+  }
+  the_neuron = IntegerVector::create(min_i+1);
   return the_neuron;
 }
 
@@ -362,7 +305,7 @@ void trainNumeric(NumericMatrix prototypes, List parameters, NumericMatrix x_dat
   
   // Backup Initialization
   List backup_proto;
-  NumericMatrix backup_clustering(x_data.rows(), nb_save[0]);
+  //NumericMatrix backup_clustering(x_data.rows(), nb_save[0]);
   NumericVector backup_energy(nb_save[0],0.0);
   
   //NumericMatrix coordDists = calculateDistanceMatrix(coords);
@@ -386,18 +329,19 @@ void trainNumeric(NumericMatrix prototypes, List parameters, NumericMatrix x_dat
     double radius = calculateRadius_f(dim, radius_type, ind, maxit);
     
     // winner indexed at 1
-    IntegerVector winner = as<IntegerVector>(oneObsAffectation_F(cur_obs, 
-                                                               cur_prototypes, 
-                                                               type, 
-                                                               affectation,
-                                                               radius_type, 
-                                                               NumericVector::create(radius), 
-                                                               the_grid) );
+    IntegerVector winner;
+    if (affectation.compare("standard")==0) {
+      winner = obsAffectation_F(cur_prototypes, cur_obs);
+    } else {
+      winner = heskeAffectation(cur_obs, cur_prototypes, 
+                type, radius_type, dist_type ,radius, coordDists, coordDists2);
+    }
+     
     
     //Step 8 : Representation Step
     NumericVector the_nei;
-    if(dist_type.compare("letremy")==0) the_nei = selectNei_f(winner[0]-1, ind, radius, coordDists, coordDists2, radius_type);
-    else the_nei = selectNei_f(winner[0]-1, ind, radius, coordDists, radius_type);
+    if(dist_type.compare("letremy")==0) the_nei = selectNei_f(winner[0]-1, radius, coordDists, coordDists2, radius_type);
+    else the_nei = selectNei_f(winner[0]-1, radius, coordDists, radius_type);
     double epsilon = 0.3*eps0[0]/(1+0.2*ind/(dim[0]*dim[1]));
 
     // Update
@@ -407,20 +351,20 @@ void trainNumeric(NumericMatrix prototypes, List parameters, NumericMatrix x_dat
     
     //create backup
     if(backup_steps.find(ind)!=backup_steps.end()){
-      NumericMatrix out_proto = scaleMatrix(prototypes, scaling);
-      colnames(out_proto) = colnames(norm_x_data);
-      CharacterVector rnames(out_proto.rows());
-      for(int i=0; i<rnames.size(); i++) {
-        rnames(i) = int_to_str(i+1);
-      }
-      rownames(out_proto) = rnames;
+      //NumericMatrix out_proto = scaleMatrix(prototypes, scaling);
+      //colnames(out_proto) = colnames(norm_x_data);
+      //CharacterVector rnames(out_proto.rows());
+      // for(int i=0; i<rnames.size(); i++) {
+      //   rnames(i) = int_to_str(i+1);
+      // }
+      //rownames(out_proto) = rnames;
       int ind_s = std::distance(backup_steps.begin(),backup_steps.find(ind));
-      backup_proto[int_to_str(ind_s+1)] = clone(out_proto);
-      backup_clustering(_,ind_s) = obsAffectation_F(prototypes, x_data);
+      backup_proto[int_to_str(ind_s+1)] = clone(prototypes);
+      //backup_clustering(_,ind_s) = obsAffectation_F(prototypes, x_data);
       IntegerVector f_x = obsAffectation_F(prototypes, norm_x_data);
       for(int i=0; i<norm_x_data.rows(); i++) {
-        if(dist_type.compare("letremy")==0) the_nei = selectNei_f(f_x[i]-1, ind, radius, coordDists, coordDists2, radius_type);
-        else the_nei = selectNei_f(f_x[i]-1, ind, radius, coordDists, radius_type);
+        if(dist_type.compare("letremy")==0) the_nei = selectNei_f(f_x[i]-1, radius, coordDists, coordDists2, radius_type);
+        else the_nei = selectNei_f(f_x[i]-1, radius, coordDists, radius_type);
         backup_energy[ind_s] += sum( the_nei*obsDistance(prototypes, norm_x_data, i) );
       }
       backup_energy[ind_s] /= (norm_x_data.rows() * prototypes.rows());
@@ -436,7 +380,7 @@ void trainNumeric(NumericMatrix prototypes, List parameters, NumericMatrix x_dat
     
   }
   backup["prototypes"] = backup_proto;
-  backup["clustering"] = backup_clustering;
+  //backup["clustering"] = backup_clustering;
   backup["energy"] = backup_energy;
 }
 
@@ -463,7 +407,7 @@ void trainKorresp(NumericMatrix prototypes, List parameters, NumericMatrix x_dat
   
   // Backup Initialization
   List backup_proto;
-  NumericMatrix backup_clustering(x_data.rows()+x_data.cols(), nb_save[0]);
+  //NumericMatrix backup_clustering(x_data.rows()+x_data.cols(), nb_save[0]);
   NumericVector backup_energy(nb_save[0],0.0);
   
   //NumericMatrix coordDists = calculateDistanceMatrix(coords);
@@ -492,17 +436,18 @@ void trainKorresp(NumericMatrix prototypes, List parameters, NumericMatrix x_dat
     }
     double radius = calculateRadius_f(dim, radius_type, ind, maxit);
     // winner indexed at 1
-    IntegerVector winner = as<IntegerVector>( oneObsAffectation_F(cur_obs, 
-                                                                 cur_prototypes, 
-                                                                 type, 
-                                                                 affectation,
-                                                                 radius_type, 
-                                                                 NumericVector::create(radius), 
-                                                                 the_grid) );
+    IntegerVector winner;
+    if (affectation.compare("standard")==0) {
+      winner = obsAffectation_F(cur_prototypes, cur_obs);
+    } else {
+      winner = heskeAffectation(cur_obs, cur_prototypes, 
+                                type, radius_type, dist_type ,radius, coordDists, coordDists2);
+    }
     //Step 8 : Representation Step
     NumericVector the_nei;
-    if(dist_type.compare("letremy")==0) the_nei = selectNei_f(winner[0]-1, ind, radius, coordDists, coordDists2, radius_type);
-    else the_nei = selectNei_f(winner[0]-1, ind, radius, coordDists, radius_type);
+    if(dist_type.compare("letremy")==0) the_nei = selectNei_f(winner[0]-1, radius, coordDists, coordDists2, radius_type);
+    else the_nei = selectNei_f(winner[0]-1, radius, coordDists, radius_type);
+    
     double epsilon = 0.3*eps0[0]/(1+0.2*ind/(dim[0]*dim[1]));
     
     // Update
@@ -512,27 +457,27 @@ void trainKorresp(NumericMatrix prototypes, List parameters, NumericMatrix x_dat
     
     //create backup
     if(backup_steps.find(ind)!=backup_steps.end()){
-      NumericMatrix out_proto = scaleMatrix(prototypes, scaling);
-      colnames(out_proto) = colnames(norm_x_data);
-      CharacterVector rnames(out_proto.rows());
-      for(int i=0; i<rnames.size(); i++) {
-        rnames(i) = int_to_str(i+1);
-      }
-      rownames(out_proto) = rnames;
+      // NumericMatrix out_proto = scaleMatrix(prototypes, scaling);
+      // colnames(out_proto) = colnames(norm_x_data);
+      // CharacterVector rnames(out_proto.rows());
+      // for(int i=0; i<rnames.size(); i++) {
+      //   rnames(i) = int_to_str(i+1);
+      // }
+      // rownames(out_proto) = rnames;
       int ind_s = std::distance(backup_steps.begin(),backup_steps.find(ind));
-      backup_proto[int_to_str(ind_s+1)] = clone(out_proto);
-      NumericMatrix input_rows = subsetNumMat(subsetNumMat(norm_x_data, Range(1,x_data.cols()), 2), Range(1,x_data.rows()), 1);
-      NumericMatrix input_prototypes_rows = subsetNumMat(prototypes, Range(1,x_data.cols()), 2);
-      IntegerVector winner_rows = obsAffectation_F(input_prototypes_rows, input_rows );
-      NumericMatrix input_cols = subsetNumMat(subsetNumMat(norm_x_data, Range(x_data.cols()+1, norm_x_data.cols()), 2), Range(x_data.rows()+1,norm_x_data.cols()), 1);
-      NumericMatrix input_prototypes_cols = subsetNumMat(prototypes, Range(x_data.cols()+1,norm_x_data.cols()), 2);
-      IntegerVector winner_cols = obsAffectation_F(input_prototypes_cols, input_cols );
-      backup_clustering(_,ind_s) = concatenate(winner_cols, winner_rows);
+      backup_proto[int_to_str(ind_s+1)] = prototypes;
+      // NumericMatrix input_rows = subsetNumMat(subsetNumMat(norm_x_data, Range(1,x_data.cols()), 2), Range(1,x_data.rows()), 1);
+      // NumericMatrix input_prototypes_rows = subsetNumMat(prototypes, Range(1,x_data.cols()), 2);
+      // IntegerVector winner_rows = obsAffectation_F(input_prototypes_rows, input_rows );
+      // NumericMatrix input_cols = subsetNumMat(subsetNumMat(norm_x_data, Range(x_data.cols()+1, norm_x_data.cols()), 2), Range(x_data.rows()+1,norm_x_data.cols()), 1);
+      // NumericMatrix input_prototypes_cols = subsetNumMat(prototypes, Range(x_data.cols()+1,norm_x_data.cols()), 2);
+      // IntegerVector winner_cols = obsAffectation_F(input_prototypes_cols, input_cols );
+      // backup_clustering(_,ind_s) = concatenate(winner_cols, winner_rows);
       IntegerVector f_x = obsAffectation_F(prototypes, norm_x_data);
       
       for(int i=0; i<norm_x_data.rows(); i++) {
-        if(dist_type.compare("letremy")==0) the_nei = selectNei_f(f_x[i]-1, ind, radius, coordDists, coordDists2, radius_type);
-        else the_nei = selectNei_f(f_x[i]-1, ind, radius, coordDists, radius_type);
+        if(dist_type.compare("letremy")==0) the_nei = selectNei_f(f_x[i]-1, radius, coordDists, coordDists2, radius_type);
+        else the_nei = selectNei_f(f_x[i]-1, radius, coordDists, radius_type);
         backup_energy[ind_s] += sum( the_nei*obsDistance(prototypes, norm_x_data, i) );
       }
       backup_energy[ind_s] /= (norm_x_data.rows() * prototypes.rows());
@@ -548,11 +493,11 @@ void trainKorresp(NumericMatrix prototypes, List parameters, NumericMatrix x_dat
     
   }
   backup["prototypes"] = backup_proto;
-  backup["clustering"] = backup_clustering;
+  //backup["clustering"] = backup_clustering;
   backup["energy"] = backup_energy;
 }
 
-// [[Rcpp::export]]
+/*
 void trainRelational(NumericMatrix prototypes, List parameters, NumericMatrix x_data, NumericMatrix norm_x_data, List backup, List the_dist){
   
   // Converting arguments to Rcpp
@@ -696,4 +641,5 @@ void trainRelational(NumericMatrix prototypes, List parameters, NumericMatrix x_
   backup["clustering"] = backup_clustering;
   backup["energy"] = backup_energy;
 }
+*/
 

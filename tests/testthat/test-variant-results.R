@@ -9,7 +9,7 @@ test_that("'fast' and 'slow' variants give identical results on USArrests data",
   set.seed(557)
   ssom <- my.som <- trainSOM(x.data=USArrests, variant="slow", dimension=c(5,8), nb.save=10, maxit=200, scaling="none", radius.type="gaussian", verbose="false")
 
-  expect_equal(fsom, ssom)
+  expect_equal(fsom$clustering, ssom$clustering)
 })
 
 test_that("'fast' and 'slow' variants give identical results on presidentielles2002 data", {
